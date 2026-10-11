@@ -5,15 +5,21 @@ import { expanded, shortAngle } from "./geometry";
 import { formatClearance } from "./units";
 export type Bundle = {
   format: "unwedged";
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   project: Project;
   route?: Route;
 };
 export function exportJson(project: Project, route?: Route) {
+  const schemaVersion: 1 | 2 = project.rects.some(
+    (rect) => (rect.door?.offset ?? 0) !== 0,
+  )
+    ? 2
+    : 1;
+  const exportedProject = { ...project, schemaVersion };
   const bundle: Bundle = {
     format: "unwedged",
-    schemaVersion: 1,
-    project,
+    schemaVersion,
+    project: exportedProject,
     ...(route ? { route } : {}),
   };
   return JSON.stringify(bundle, null, 2);
@@ -22,7 +28,13 @@ export function importJson(raw: string): Bundle {
   if (new TextEncoder().encode(raw).length > LIMITS.jsonBytes)
     throw Error("File is larger than 1 MB");
   const b = JSON.parse(raw) as Bundle;
-  if (!b || b.format !== "unwedged" || b.schemaVersion !== 1)
+  if (
+    !b ||
+    b.format !== "unwedged" ||
+    ![1, 2].includes(b.schemaVersion) ||
+    !b.project ||
+    b.project.schemaVersion !== b.schemaVersion
+  )
     throw Error("Not an Unwedged project");
   validateProject(b.project);
   if (b.route) {
@@ -67,7 +79,7 @@ export function importJson(raw: string): Bundle {
   }
   return {
     format: "unwedged",
-    schemaVersion: 1,
+    schemaVersion: b.schemaVersion,
     project: b.project,
     ...(b.route ? { route: b.route } : {}),
   };

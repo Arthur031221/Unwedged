@@ -21,45 +21,53 @@ try {
     headless: true,
   });
 
-  const prep = await browser.newPage({
-    viewport: { width: 1280, height: 800 },
-  });
-  await prep.goto("http://127.0.0.1:4176/", { waitUntil: "networkidle" });
-  await prep.getByRole("button", { name: /Find route/ }).click();
-  await prep
-    .locator("#route-panel")
-    .getByText("Route ready")
-    .waitFor({ timeout: 20000 });
-  await prep.getByRole("button", { name: /Share/ }).click();
-  const link = prep.url();
-  await prep.close();
-
   const context = await browser.newContext({
     viewport: { width: 1280, height: 800 },
     deviceScaleFactor: 1,
     recordVideo: { dir: temp, size: { width: 1280, height: 800 } },
   });
   const page = await context.newPage();
-  await page.goto(link, { waitUntil: "networkidle" });
+  await page.goto("http://127.0.0.1:4176/", { waitUntil: "networkidle" });
   await page
-    .locator(".route-line")
-    .waitFor({ state: "attached", timeout: 20000 });
-  await page.waitForTimeout(700);
-  await page.getByRole("button", { name: "Play route" }).click();
-  await page.waitForTimeout(2200);
-  const scrubber = page.locator('.transport-controls input[type="range"]');
-  await scrubber.fill("650");
-  await page.waitForTimeout(800);
-  await page.locator("#furniture").getByLabel("Width").fill("75");
+    .locator("#furniture")
+    .getByLabel("Width")
+    .waitFor({ state: "visible" });
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(1600);
   await page.getByRole("button", { name: /Find route/ }).click();
   await page
     .locator("#route-panel")
     .getByText("Route ready")
-    .waitFor({ timeout: 20000 });
+    .waitFor({ timeout: 30000 });
+  await page.waitForTimeout(900);
+
+  const width = page.locator("#furniture").getByLabel("Width");
+  await width.fill("75");
   await page.waitForTimeout(700);
+  await page.getByRole("button", { name: "Undo" }).click();
+  await width.waitFor({ state: "visible" });
+  await page.waitForFunction(
+    () =>
+      document.querySelector('#furniture input[aria-label="Width"]')?.value ===
+      "74",
+  );
+  await page.waitForTimeout(650);
+  await page.getByRole("button", { name: "Redo" }).click();
+  await page.waitForFunction(
+    () =>
+      document.querySelector('#furniture input[aria-label="Width"]')?.value ===
+      "75",
+  );
+  await page.waitForTimeout(900);
+
+  await page.getByRole("button", { name: /Find route/ }).click();
+  await page
+    .locator("#route-panel")
+    .getByText("Route ready")
+    .waitFor({ timeout: 30000 });
+  await page.waitForTimeout(800);
   await page.getByRole("button", { name: "Play route" }).click();
-  await page.waitForTimeout(2300);
-  await page.waitForTimeout(4400);
+  await page.waitForTimeout(4200);
   await context.close();
   await browser.close();
   browser = undefined;
@@ -73,11 +81,11 @@ try {
     [
       "-y",
       "-ss",
-      "0.8",
+      "0.5",
       "-i",
       join(temp, recording),
       "-t",
-      "18",
+      "24",
       "-filter_complex",
       "fps=12,scale=960:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer",
       output,
@@ -91,15 +99,24 @@ try {
       "-v",
       "error",
       "-show_entries",
-      "format=duration",
+      "format=duration,size",
       "-of",
-      "default=noprint_wrappers=1:nokey=1",
+      "default=noprint_wrappers=1",
       output,
     ],
     { encoding: "utf8" },
   );
+  if (info.status !== 0) throw new Error("ffprobe could not inspect the GIF");
+  const values = Object.fromEntries(
+    info.stdout
+      .trim()
+      .split("\n")
+      .map((line) => line.split("=")),
+  );
+  const size = Number(values.size);
+  if (size >= 10 * 1024 * 1024) throw new Error("GIF exceeds 10 MB");
   console.log(
-    `Wrote ${output} (${Number(info.stdout.trim()).toFixed(2)} seconds).`,
+    `Wrote ${output} (${Number(values.duration).toFixed(2)} seconds, ${size} bytes).`,
   );
 } finally {
   if (browser) await browser.close();

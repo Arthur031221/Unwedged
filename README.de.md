@@ -10,7 +10,7 @@ Finde eine Route mit Kurve, bevor das Sofa ankommt.
 
 Ein lokales Messblatt für einen Grundriss auf einer Ebene, mit dem sich ein starrer rechteckiger Gegenstand in 2D prüfen lässt.
 
-**3,204 Routenposen unabhängig geprüft.** Prüfmethode: beide erfolgreichen Voreinstellungen ausführen und dann jedes zurückgegebene Segment mit Shapely in 800 Intervallen abtasten. [Prüfung nachvollziehen](CONTRIBUTING.md). Die Abtastung testet die Implementierung. Der Verifizierer prüft die kontinuierliche Bewegung im gezeichneten 2D-Modell.
+**6.408 Routenposen unabhängig abgetastet.** Die Prüfung führt beide erfolgreichen Voreinstellungen und vier Regressionstests aus. Anschließend tastet sie jede zurückgegebene Route mit Shapely in 800 Intervallen pro Segment ab. Die sechs Routen umfassen beide Türausrichtungen. [Prüfung nachvollziehen](CONTRIBUTING.md). Die Abtastung liefert Hinweise zur Implementierung. Der App-Verifizierer prüft die kontinuierliche Bewegung im gezeichneten 2D-Modell.
 
 | Vorher                                            | Nachher                                                                             |
 | ------------------------------------------------- | ----------------------------------------------------------------------------------- |
@@ -18,6 +18,10 @@ Ein lokales Messblatt für einen Grundriss auf einer Ebene, mit dem sich ein sta
 | Unklar, ob eine Kurve passt                       | Gespeicherte Messwerte, Routenvorschau und ein bemaßter Routenplan zur Prüfung      |
 
 ![Echte Browseraufnahme einer Möbelroute um eine Wand](assets/demo.gif)
+
+**Zum Ausprobieren:** Wähle Corner landing, ändere die Möbelbreite von 74 auf 75 und verwende Undo und Redo. Bei einer Messwertänderung wird die Route verworfen. Wähle Find route und spiele anschließend das Ergebnis ab.
+
+Undo und Redo stellen zusammengefasste Messwertänderungen wieder her. Messwerte werden lokal automatisch gespeichert und können beim nächsten Besuch wiederhergestellt werden. Routen sind nicht Teil dieser Speicherung. Wenn der Browser keinen Speicher bereitstellt, verwende Save project, um eine Kopie zu behalten. Tastaturbenutzer können die Felder bearbeiten. Auf Mobilgeräten öffnet die Schaltfläche Measurements das Bedienfeld zum Bearbeiten von Hindernissen. Türöffnungen lassen sich entlang einer Wand verschieben. Dateien mit versetzten Öffnungen verwenden Schema-Version 2 und werden von älteren Clients abgelehnt. Dateien der Version 1 mit mittiger Öffnung werden weiterhin akzeptiert.
 
 Unwedged prüft einen starren rechteckigen Gegenstand, der sich auf einer Ebene bewegt. 3D, Treppen, Kippen, tragende Personen und Verformung werden nicht modelliert. Eine begrenzte Suche kann eine Route übersehen. Sie beweist niemals, dass ein Durchgang unmöglich ist.
 
@@ -28,7 +32,7 @@ Die Zeichnung ist das Modell. Miss, was du einzeichnest.
 Installiere Node.js 22.12 oder neuer. Dieser Befehl lädt die App einmal herunter und stellt sie anschließend auf diesem Computer unter `127.0.0.1` bereit: Git muss ebenfalls installiert sein.
 
 ```sh
-npx github:Arthur031221/Unwedged
+npx github:Arthur031221/Unwedged#v1.1.0
 ```
 
 Die Browser-App enthält ihre Schriftdateien und den Solver-Worker. Warte nach dem ersten Aufruf auf die Anzeige "Offline bereit", bevor du dich auf die Offline-Nutzung der App und Routensuche verlässt. Projektdateien bleiben im Browser oder im Download-Ordner. Die App ruft während der Nutzung keine API auf.
@@ -59,19 +63,19 @@ Messwerte werden in Zentimetern gespeichert. Die Anzeige lässt sich auf Zoll um
 
 <details><summary>macOS</summary>
 
-Installiere Node.js 22.12 oder neuer, öffne Terminal und führe `npx github:Arthur031221/Unwedged` aus. Öffne die angezeigte Loopback-Adresse. Beende den Server mit Ctrl+C. Git muss ebenfalls installiert sein.
+Installiere Node.js 22.12 oder neuer, öffne Terminal und führe `npx github:Arthur031221/Unwedged#v1.1.0` aus. Öffne die angezeigte Loopback-Adresse. Beende den Server mit Ctrl+C. Git muss ebenfalls installiert sein.
 
 </details>
 
 <details><summary>Linux</summary>
 
-Installiere Node.js 22.12 oder neuer, öffne ein Terminal und führe `npx github:Arthur031221/Unwedged` aus. Öffne die angezeigte Loopback-Adresse. Beende den Server mit Ctrl+C. Git muss ebenfalls installiert sein.
+Installiere Node.js 22.12 oder neuer, öffne ein Terminal und führe `npx github:Arthur031221/Unwedged#v1.1.0` aus. Öffne die angezeigte Loopback-Adresse. Beende den Server mit Ctrl+C. Git muss ebenfalls installiert sein.
 
 </details>
 
 <details><summary>Windows</summary>
 
-Installiere Node.js 22.12 oder neuer, öffne PowerShell und führe `npx github:Arthur031221/Unwedged` aus. Öffne die angezeigte Loopback-Adresse. Beende den Server mit Ctrl+C. Git muss ebenfalls installiert sein.
+Installiere Node.js 22.12 oder neuer, öffne PowerShell und führe `npx github:Arthur031221/Unwedged#v1.1.0` aus. Öffne die angezeigte Loopback-Adresse. Beende den Server mit Ctrl+C. Git muss ebenfalls installiert sein.
 
 </details>
 

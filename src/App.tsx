@@ -3,13 +3,15 @@ import { presets } from "./core/presets";
 import { exportJson, routeSvg } from "./core/serialize";
 import { LIMITS, type Project, type Route } from "./core/schema";
 import { messages, localeNames, type Locale } from "./locales";
-import { editRect } from "./core/editor";
+import { createObstacle, editRect } from "./core/editor";
 import { shortAngle } from "./core/geometry";
 import { formatClearance } from "./core/units";
 import { Field, RectEditor } from "./ui/Fields";
 import { Floorplan } from "./ui/Floorplan";
 import { useRoutePlayback } from "./hooks/useRoutePlayback";
 import { useWorkerTasks } from "./hooks/useWorkerTasks";
+import { useProjectHistory } from "./hooks/useProjectHistory";
+import { createDraft, DRAFT_KEY, readDraft } from "./core/draft";
 const locales = Object.keys(messages) as Locale[];
 const stored = (key: string) => {
   try {
@@ -28,9 +30,35 @@ const saveStored = (key: string, value: string) => {
 const validLocale = (value: string | null): value is Locale =>
   !!value && locales.includes(value as Locale);
 export default function App() {
-  const [project, setProject] = useState<Project>(structuredClone(presets[1]!));
+  const initialDraft = useRef<{
+    project: Project | null;
+    unavailable: boolean;
+  } | null>(null);
+  if (!initialDraft.current) {
+    let raw: string | null = null;
+    let unavailable = false;
+    try {
+      raw = localStorage.getItem(DRAFT_KEY);
+    } catch {
+      unavailable = true;
+    }
+    initialDraft.current = { project: readDraft(raw), unavailable };
+  }
+  const initialProject = initialDraft.current.project ?? presets[1]!;
+  const historyState = useProjectHistory(initialProject);
+  const { project } = historyState;
   const [route, setRoute] = useState<Route | null>(null);
   const [status, setStatus] = useState<keyof typeof messages.en | "">("");
+  const [autosaveEnabled, setAutosaveEnabled] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState<
+    "saved" | "unavailable" | "restored" | ""
+  >(
+    initialDraft.current.unavailable
+      ? "unavailable"
+      : initialDraft.current.project
+        ? "restored"
+        : "",
+  );
   const tasks = useWorkerTasks();
   const { busy, explored } = tasks;
   const [fine, setFine] = useState(false);
@@ -51,12 +79,87 @@ export default function App() {
   );
   const [selection, setSelection] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [narrowViewport, setNarrowViewport] = useState(false);
+  const measureOpener = useRef<HTMLButtonElement>(null);
+  const sidebar = useRef<HTMLElement>(null);
+  const canvas = useRef<SVGSVGElement>(null);
+  const focusCanvasAfterClose = useRef(false);
   const [offlineReady, setOfflineReady] = useState(false);
   const importGeneration = useRef(0);
-  const projectRef = useRef(project);
+  const projectRef = historyState.projectRef;
   const routeRef = useRef<Route | null>(route);
   const file = useRef<HTMLInputElement>(null);
   const t = messages[locale];
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 740px)");
+    const update = () => {
+      setNarrowViewport(query.matches);
+      if (!query.matches) setMobileOpen(false);
+    };
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    if (!mobileOpen || !narrowViewport) {
+      if (mobileOpen) return;
+      if (focusCanvasAfterClose.current) {
+        focusCanvasAfterClose.current = false;
+        requestAnimationFrame(() => canvas.current?.focus());
+      }
+      return;
+    }
+    const shell = document.querySelector<HTMLElement>(".app-shell");
+    const topbar = shell?.querySelector<HTMLElement>(".topbar");
+    const mainPanel = shell?.querySelector<HTMLElement>(".main-panel");
+    if (topbar) topbar.inert = true;
+    if (mainPanel) mainPanel.inert = true;
+    const focusable = () =>
+      Array.from(
+        sidebar.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((element) => element.getClientRects().length > 0);
+    const focusFrame = requestAnimationFrame(() => focusable()[0]?.focus());
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMobileOpen(false);
+        requestAnimationFrame(() => measureOpener.current?.focus());
+      } else if (event.key === "Tab") {
+        const items = focusable();
+        if (!items.length) {
+          event.preventDefault();
+          sidebar.current?.focus();
+          return;
+        }
+        const first = items[0]!;
+        const last = items[items.length - 1]!;
+        if (
+          event.shiftKey &&
+          (document.activeElement === first ||
+            !sidebar.current?.contains(document.activeElement))
+        ) {
+          event.preventDefault();
+          last.focus();
+        } else if (
+          !event.shiftKey &&
+          (document.activeElement === last ||
+            !sidebar.current?.contains(document.activeElement))
+        ) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", onKeyDown);
+      if (topbar) topbar.inert = false;
+      if (mainPanel) mainPanel.inert = false;
+    };
+  }, [mobileOpen, narrowViewport]);
   const shown = (cm: number) => (unit === "cm" ? cm : cm / 2.54);
   const label = (cm: number) => `${shown(cm).toFixed(1)} ${unit}`;
   const presetLabel = (name: string) =>
@@ -83,10 +186,55 @@ export default function App() {
   const change = (fn: (p: Project) => Project) => {
     invalidate();
     const next = fn(structuredClone(projectRef.current));
-    projectRef.current = next;
-    setProject(next);
+    if (next.rects.some((rect) => (rect.door?.offset ?? 0) !== 0))
+      next.schemaVersion = 2;
+    historyState.change(next);
+    setAutosaveEnabled(true);
     setStatus("");
   };
+  const restoreHistory = (direction: "undo" | "redo") => {
+    if (direction === "undo" ? !historyState.canUndo : !historyState.canRedo)
+      return;
+    invalidate();
+    if (direction === "undo") historyState.undo();
+    else historyState.redo();
+    setAutosaveEnabled(true);
+    setStatus("");
+  };
+  useEffect(() => {
+    if (!autosaveEnabled) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, createDraft(projectRef.current));
+      setAutosaveStatus("saved");
+    } catch {
+      setAutosaveStatus("unavailable");
+    }
+  }, [autosaveEnabled, project]);
+  useEffect(() => {
+    const keydown = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        ((target instanceof HTMLInputElement &&
+          ["text", "number"].includes(target.type)) ||
+          target instanceof HTMLTextAreaElement ||
+          target instanceof HTMLSelectElement ||
+          target.isContentEditable)
+      )
+        return;
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+      const key = event.key.toLowerCase();
+      if (key === "z") {
+        event.preventDefault();
+        restoreHistory(event.shiftKey ? "redo" : "undo");
+      } else if (key === "y" && !event.shiftKey) {
+        event.preventDefault();
+        restoreHistory("redo");
+      }
+    };
+    window.addEventListener("keydown", keydown);
+    return () => window.removeEventListener("keydown", keydown);
+  });
   useEffect(() => {
     const rawHash = location.hash.slice(1);
     if (!rawHash) return;
@@ -103,11 +251,11 @@ export default function App() {
     }
     tasks.importRaw(raw, {
       onImported: (bundle) => {
-        projectRef.current = bundle.project;
+        historyState.reset(bundle.project);
         routeRef.current = bundle.route ?? null;
-        setProject(bundle.project);
         setRoute(bundle.route ?? null);
         setStatus(bundle.route ? "verified" : "");
+        setAutosaveStatus("");
       },
       onImportError: () => setStatus("invalidProject"),
       onWorkerError: () => setStatus("workerError"),
@@ -263,11 +411,12 @@ export default function App() {
       if (token !== importGeneration.current) return;
       tasks.importRaw(String(reader.result), {
         onImported: (bundle) => {
-          projectRef.current = bundle.project;
+          historyState.reset(bundle.project);
           routeRef.current = bundle.route ?? null;
-          setProject(bundle.project);
           setRoute(bundle.route ?? null);
           setStatus(bundle.route ? "verified" : "");
+          setAutosaveEnabled(true);
+          setAutosaveStatus("");
         },
         onImportError: () => setStatus("invalidProject"),
         onWorkerError: () => setStatus("workerError"),
@@ -346,6 +495,24 @@ export default function App() {
           </div>
         </div>
         <div className="toolbar">
+          <button
+            className="history-btn"
+            onClick={() => restoreHistory("undo")}
+            disabled={!historyState.canUndo}
+            aria-label={t.undo}
+            title={t.undo}
+          >
+            ↶
+          </button>
+          <button
+            className="history-btn"
+            onClick={() => restoreHistory("redo")}
+            disabled={!historyState.canRedo}
+            aria-label={t.redo}
+            title={t.redo}
+          >
+            ↷
+          </button>
           {offlineReady && (
             <span className="offline-ready">{t.offlineReady}</span>
           )}
@@ -374,7 +541,28 @@ export default function App() {
         </div>
       </header>
       <main className="workspace">
-        <aside className={`sidebar ${mobileOpen ? "open" : ""}`}>
+        <aside
+          ref={sidebar}
+          id="measurements-panel"
+          className={`sidebar ${mobileOpen ? "open" : ""}`}
+          role={narrowViewport && mobileOpen ? "dialog" : undefined}
+          aria-modal={narrowViewport && mobileOpen ? true : undefined}
+          aria-label={narrowViewport && mobileOpen ? t.menu : undefined}
+          onFocusCapture={(event) => {
+            if (
+              event.target instanceof HTMLInputElement &&
+              event.target.type === "number"
+            )
+              historyState.beginGroup();
+          }}
+          onBlurCapture={(event) => {
+            if (
+              event.target instanceof HTMLInputElement &&
+              event.target.type === "number"
+            )
+              historyState.endGroup();
+          }}
+        >
           <div className="side-head">
             <div>
               <span className="eyebrow">{t.fieldSheet}</span>
@@ -383,7 +571,10 @@ export default function App() {
             <button
               className="mobile-close"
               aria-label={t.close}
-              onClick={() => setMobileOpen(false)}
+              onClick={() => {
+                setMobileOpen(false);
+                requestAnimationFrame(() => measureOpener.current?.focus());
+              }}
             >
               ×
             </button>
@@ -391,7 +582,10 @@ export default function App() {
           <div className="step-tabs">
             <button
               className="active"
-              onClick={() => setMobileOpen(!mobileOpen)}
+              onClick={() => {
+                setMobileOpen(false);
+                requestAnimationFrame(() => measureOpener.current?.focus());
+              }}
             >
               {t.layout}
             </button>
@@ -440,10 +634,7 @@ export default function App() {
                   const selectedPreset = structuredClone(
                     presets[Number(e.target.value)]!,
                   );
-                  invalidate();
-                  projectRef.current = selectedPreset;
-                  setProject(selectedPreset);
-                  setStatus("");
+                  change(() => selectedPreset);
                 }}
               >
                 {presets.map((p, i) => (
@@ -471,19 +662,37 @@ export default function App() {
               <button
                 className={mode === "wall" ? "tool-active" : ""}
                 disabled={rects.length >= LIMITS.rectangles}
-                onClick={() => setMode(mode === "wall" ? "select" : "wall")}
+                onClick={() => {
+                  setMode(mode === "wall" ? "select" : "wall");
+                  if (narrowViewport && mobileOpen) {
+                    focusCanvasAfterClose.current = true;
+                    setMobileOpen(false);
+                  }
+                }}
               >
                 ＋ {t.draw}
               </button>
               <button
                 className={mode === "start" ? "tool-active" : ""}
-                onClick={() => setMode(mode === "start" ? "select" : "start")}
+                onClick={() => {
+                  setMode(mode === "start" ? "select" : "start");
+                  if (narrowViewport && mobileOpen) {
+                    focusCanvasAfterClose.current = true;
+                    setMobileOpen(false);
+                  }
+                }}
               >
                 ◎ {t.start}
               </button>
               <button
                 className={mode === "goal" ? "tool-active" : ""}
-                onClick={() => setMode(mode === "goal" ? "select" : "goal")}
+                onClick={() => {
+                  setMode(mode === "goal" ? "select" : "goal");
+                  if (narrowViewport && mobileOpen) {
+                    focusCanvasAfterClose.current = true;
+                    setMobileOpen(false);
+                  }
+                }}
               >
                 ◇ {t.destination}
               </button>
@@ -590,19 +799,32 @@ export default function App() {
           <section className="form-section">
             <div className="section-title">
               <h2>{t.obstacles}</h2>
-              <button
-                className="text-btn danger"
-                disabled={!selection}
-                onClick={() => {
-                  change((p) => ({
-                    ...p,
-                    rects: p.rects.filter((r) => r.id !== selection),
-                  }));
-                  setSelection("");
-                }}
-              >
-                {t.remove}
-              </button>
+              <div className="obstacle-actions">
+                <button
+                  className="text-btn"
+                  disabled={rects.length >= LIMITS.rectangles}
+                  onClick={() => {
+                    const obstacle = createObstacle(projectRef.current);
+                    change((p) => ({ ...p, rects: [...p.rects, obstacle] }));
+                    setSelection(obstacle.id);
+                  }}
+                >
+                  {t.addObstacle}
+                </button>
+                <button
+                  className="text-btn danger"
+                  disabled={!selection}
+                  onClick={() => {
+                    change((p) => ({
+                      ...p,
+                      rects: p.rects.filter((r) => r.id !== selection),
+                    }));
+                    setSelection("");
+                  }}
+                >
+                  {t.remove}
+                </button>
+              </div>
             </div>
             {rects.length === 0 ? (
               <p className="empty-note">{t.emptyObstacles}</p>
@@ -715,6 +937,19 @@ export default function App() {
               onChange={(e) => openFile(e.target.files?.[0])}
             />
           </footer>
+          {autosaveStatus && (
+            <p className={`autosave-status ${autosaveStatus}`} role="status">
+              {
+                t[
+                  autosaveStatus === "unavailable"
+                    ? "autosaveUnavailable"
+                    : autosaveStatus === "restored"
+                      ? "autosaveRestored"
+                      : "autosaved"
+                ]
+              }
+            </p>
+          )}
         </aside>
         <section className="main-panel">
           <div className="canvas-head">
@@ -732,13 +967,20 @@ export default function App() {
             </div>
             <button
               className="mobile-measure"
-              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-expanded={mobileOpen}
+              aria-controls="measurements-panel"
+              ref={measureOpener}
+              onClick={() => {
+                if (!mobileOpen) setMobileOpen(true);
+                else setMobileOpen(false);
+              }}
             >
               ☷ {t.menu}
             </button>
           </div>
           <div className="canvas-wrap">
             <Floorplan
+              svgRef={canvas}
               project={project}
               route={route}
               pose={pose}
@@ -750,6 +992,8 @@ export default function App() {
               setMode={setMode}
               label={label}
               change={change}
+              beginDrag={historyState.beginGroup}
+              endDrag={historyState.endGroup}
             />
           </div>
           <div className="transport">

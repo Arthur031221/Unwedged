@@ -10,7 +10,7 @@ Trouvez un itinéraire avec un virage avant l'arrivée du canapé.
 
 Une fiche de terrain locale pour mesurer un logement de plain-pied et vérifier en 2D un objet rectangulaire rigide.
 
-**3,204 poses de trajet vérifiées indépendamment.** Méthode de vérification : exécuter les deux préréglages réussis, puis échantillonner chaque segment retourné en 800 intervalles avec Shapely. [Reproduire la vérification](CONTRIBUTING.md). L'échantillonnage teste l'implémentation. Le vérificateur contrôle le mouvement continu dans le modèle 2D dessiné.
+**6 408 poses de trajet échantillonnées indépendamment.** La vérification exécute les deux préréglages qui trouvent un trajet et quatre cas de régression, puis échantillonne chaque trajet retourné en 800 intervalles par segment avec Shapely. Les six trajets couvrent les deux orientations de porte. [Reproduire la vérification](CONTRIBUTING.md). L'échantillonnage apporte des éléments sur l'implémentation. Le vérificateur de l'application contrôle séparément le mouvement continu dans le modèle 2D dessiné.
 
 | Avant                                                                            | Après                                                                                            |
 | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -18,6 +18,10 @@ Une fiche de terrain locale pour mesurer un logement de plain-pied et vérifier 
 | Incertitude sur le passage d'un virage                                           | Mesures enregistrées, lecture du trajet et plan coté à examiner                                  |
 
 ![Enregistrement réel dans le navigateur d'un trajet de meuble contournant un mur](assets/demo.gif)
+
+**Pour essayer :** choisissez Corner landing, modifiez la largeur du meuble de 74 à 75, puis utilisez Undo et Redo. Le trajet est effacé lorsque les mesures changent. Recherchez un trajet, puis lancez sa lecture.
+
+Undo et Redo rétablissent des groupes de modifications des mesures. Les mesures sont enregistrées automatiquement dans le stockage local et peuvent être récupérées à la visite suivante. Les trajets ne sont pas inclus dans cet enregistrement. Si le navigateur ne dispose pas de stockage, utilisez Save project pour conserver une copie. Les personnes qui utilisent le clavier peuvent modifier les champs. Sur mobile, le bouton Measurements ouvre le panneau de modification des obstacles. Les ouvertures de porte peuvent être décalées le long d'un mur. Les fichiers avec une ouverture décalée utilisent le schéma version 2 et sont refusés par les anciennes versions du client. Les fichiers version 1 avec une ouverture centrée restent acceptés.
 
 Unwedged vérifie le déplacement d'un rectangle rigide sur un seul étage. Il ne modélise ni la 3D, ni les escaliers, ni l'inclinaison, ni les porteurs, ni la déformation. Une recherche bornée peut manquer un trajet. Elle ne prouve jamais qu'un passage est impossible.
 
@@ -28,7 +32,7 @@ Le dessin est le modèle. Mesurez ce que vous y dessinez.
 Installez Node.js 22.12 ou une version ultérieure. Cette commande télécharge l'application une seule fois, puis la sert sur cet ordinateur à l'adresse `127.0.0.1` : Git doit aussi être installé.
 
 ```sh
-npx github:Arthur031221/Unwedged
+npx github:Arthur031221/Unwedged#v1.1.0
 ```
 
 L'application du navigateur intègre ses polices et son worker de résolution. Après la première visite, attendez l'indicateur « Prêt hors ligne » avant de compter sur le fonctionnement hors ligne de l'application et de la recherche de trajets. Les fichiers du projet restent dans le navigateur ou dans les téléchargements. L'application n'effectue aucun appel API pendant son utilisation.
@@ -59,19 +63,19 @@ Les mesures sont enregistrées en centimètres. Vous pouvez afficher les pouces.
 
 <details><summary>macOS</summary>
 
-Installez Node.js 22.12 ou une version ultérieure, ouvrez Terminal et lancez `npx github:Arthur031221/Unwedged`. Ouvrez l'adresse de bouclage affichée. Arrêtez le serveur avec Ctrl+C. Git doit aussi être installé.
+Installez Node.js 22.12 ou une version ultérieure, ouvrez Terminal et lancez `npx github:Arthur031221/Unwedged#v1.1.0`. Ouvrez l'adresse de bouclage affichée. Arrêtez le serveur avec Ctrl+C. Git doit aussi être installé.
 
 </details>
 
 <details><summary>Linux</summary>
 
-Installez Node.js 22.12 ou une version ultérieure, ouvrez un terminal et lancez `npx github:Arthur031221/Unwedged`. Ouvrez l'adresse de bouclage affichée. Arrêtez le serveur avec Ctrl+C. Git doit aussi être installé.
+Installez Node.js 22.12 ou une version ultérieure, ouvrez un terminal et lancez `npx github:Arthur031221/Unwedged#v1.1.0`. Ouvrez l'adresse de bouclage affichée. Arrêtez le serveur avec Ctrl+C. Git doit aussi être installé.
 
 </details>
 
 <details><summary>Windows</summary>
 
-Installez Node.js 22.12 ou une version ultérieure, ouvrez PowerShell et lancez `npx github:Arthur031221/Unwedged`. Ouvrez l'adresse de bouclage affichée. Arrêtez le serveur avec Ctrl+C. Git doit aussi être installé.
+Installez Node.js 22.12 ou une version ultérieure, ouvrez PowerShell et lancez `npx github:Arthur031221/Unwedged#v1.1.0`. Ouvrez l'adresse de bouclage affichée. Arrêtez le serveur avec Ctrl+C. Git doit aussi être installé.
 
 </details>
 

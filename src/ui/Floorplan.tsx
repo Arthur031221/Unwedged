@@ -6,6 +6,7 @@ import { messages, type Locale } from "../locales";
 
 type Mode = "select" | "wall" | "start" | "goal";
 type Props = {
+  svgRef?: React.Ref<SVGSVGElement>;
   project: Project;
   route: Route | null;
   pose: Pose;
@@ -17,9 +18,12 @@ type Props = {
   setMode: (value: Mode) => void;
   label: (cm: number) => string;
   change: (fn: (project: Project) => Project) => void;
+  beginDrag: () => void;
+  endDrag: () => void;
 };
 
 export function Floorplan({
+  svgRef,
   project,
   route,
   pose,
@@ -31,6 +35,8 @@ export function Floorplan({
   setMode,
   label,
   change,
+  beginDrag,
+  endDrag,
 }: Props) {
   const t = messages[locale];
   const rects = project.rects;
@@ -114,9 +120,11 @@ export function Floorplan({
   const path = route?.poses.map((q) => `${X(q.x)},${Y(q.y)}`).join(" ");
   return (
     <svg
+      ref={svgRef}
       className={`floorplan ${mode !== "select" ? "placing" : ""}`}
       viewBox={`0 0 ${viewW} ${viewH}`}
       role="img"
+      tabIndex={0}
       aria-label={`${project.name}. ${mode === "wall" ? t.placeObstacle : mode === "start" ? t.setStartPose : mode === "goal" ? t.setDestinationPose : t.inspect}. ${t.keyboardFields}`}
       onPointerDown={pointer}
       onPointerMove={(e) => {
@@ -132,7 +140,18 @@ export function Floorplan({
           }));
         }
       }}
-      onPointerUp={() => setDragging(null)}
+      onPointerUp={() => {
+        if (dragging) endDrag();
+        setDragging(null);
+      }}
+      onPointerCancel={() => {
+        if (dragging) endDrag();
+        setDragging(null);
+      }}
+      onLostPointerCapture={() => {
+        if (dragging) endDrag();
+        setDragging(null);
+      }}
     >
       <defs>
         <pattern
@@ -212,6 +231,9 @@ export function Floorplan({
               const q = worldPoint(
                 e as unknown as React.PointerEvent<SVGSVGElement>,
               );
+              if (document.activeElement instanceof HTMLElement)
+                document.activeElement.blur();
+              beginDrag();
               setDragging({ id: r.id, dx: q.x - r.x, dy: q.y - r.y });
               e.currentTarget.ownerSVGElement?.setPointerCapture(e.pointerId);
             }
@@ -238,8 +260,8 @@ export function Floorplan({
           {r.door && project.furniture.height < r.door.height && (
             <g>
               <text
-                x={X(r.x)}
-                y={Y(r.y) - 8}
+                x={X(r.x + (r.height > r.width ? 0 : (r.door.offset ?? 0)))}
+                y={Y(r.y + (r.height > r.width ? (r.door.offset ?? 0) : 0)) - 8}
                 textAnchor="middle"
                 className="door-label"
               >

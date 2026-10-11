@@ -6,11 +6,11 @@ export type Rect = {
   width: number;
   height: number;
   kind: "wall" | "obstacle";
-  door?: { width: number; height: number };
+  door?: { width: number; height: number; offset?: number };
 };
 export type Furniture = { length: number; width: number; height: number };
 export type Project = {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   name: string;
   floor: { width: number; height: number };
   furniture: Furniture;
@@ -42,7 +42,7 @@ export function validateProject(p: unknown): asserts p is Project {
   if (!p || typeof p !== "object") throw Error("Project must be an object");
   const d = p as Project;
   if (
-    d.schemaVersion !== 1 ||
+    ![1, 2].includes(d.schemaVersion) ||
     typeof d.name !== "string" ||
     d.name.length > 100
   )
@@ -109,7 +109,12 @@ export function validateProject(p: unknown): asserts p is Project {
           r.door.width <= 0 ||
           r.door.width >= Math.max(r.width, r.height) ||
           r.door.height <= 0 ||
-          r.door.height > LIMITS.dimension))
+          r.door.height > LIMITS.dimension ||
+          (r.door.offset !== undefined &&
+            (!finite(r.door.offset) ||
+              Math.abs(r.door.offset) >
+                (Math.max(r.width, r.height) - r.door.width) / 2 ||
+              (r.door.offset !== 0 && d.schemaVersion !== 2)))))
     )
       throw Error("Obstacle geometry is invalid");
     else ids.add(r.id);

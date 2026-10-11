@@ -1,6 +1,6 @@
 {
   "name": "unwedged",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": false,
   "type": "module",
   "engines": {
@@ -17,6 +17,7 @@
     "LICENSE",
     "docs",
     "CHANGELOG.md",
+    "CONTRIBUTING.md",
     "public/unwedged-mark.svg"
   ],
   "scripts": {

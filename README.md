@@ -10,7 +10,7 @@ Find a turning route before the sofa arrives.
 
 A local field sheet for measuring a single-floor layout and checking a rigid rectangular piece in 2D.
 
-**3,204 route poses checked independently.** Run both successful presets, then sample each returned segment at 800 intervals in Shapely to check. [Reproduce the check](CONTRIBUTING.md). Sampling tests the implementation. The verifier checks continuous motion in the drawn 2D model.
+**6,408 route poses independently sampled.** The check runs both successful presets and four regression fixtures, then uses Shapely to sample each returned route at 800 intervals per segment. The six routes cover both doorway orientations. [Reproduce the check](CONTRIBUTING.md). Sampling gives evidence about the implementation. The app's verifier separately checks continuous motion in the drawn 2D model.
 
 | Before                                                | After                                                                       |
 | ----------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -18,6 +18,10 @@ A local field sheet for measuring a single-floor layout and checking a rigid rec
 | Turning clearance uncertain                           | Saved measurements, route playback and a dimensioned route sheet to review  |
 
 ![A real browser recording of a furniture route around a wall](assets/demo.gif)
+
+**Try it:** choose Corner landing, change furniture Width from 74 to 75, then use Undo and Redo. Changing measurements clears the route. Find route, then play the result.
+
+Undo and Redo restore grouped measurement edits. Measurements autosave locally so you can recover them on your next visit. Routes aren't included in autosave. If browser storage is unavailable, use Save project to keep a copy. Keyboard users can edit fields. On mobile, open the Measurements panel with its button to edit obstacles. Door openings can be offset along a wall. Offset files use schema version 2, and older clients reject them. Centred version 1 files still work.
 
 Unwedged checks a rigid rectangle moving on one floor. It doesn't model 3D, stairs, tilting, human carriers or deformation. A bounded search can miss a route. It never proves passage is impossible.
 
@@ -28,7 +32,7 @@ The drawing is the model. Measure what you put in it.
 Install Node.js 22.12 or newer and Git. This command downloads the app once, then serves it on your computer at `127.0.0.1`:
 
 ```sh
-npx github:Arthur031221/Unwedged
+npx github:Arthur031221/Unwedged#v1.1.0
 ```
 
 The browser app bundles its fonts and solver worker. After your first visit, wait for "Offline ready" before relying on the app and route search offline. Project files stay in the browser or downloads. The app makes no runtime API calls.
@@ -50,28 +54,28 @@ Save this as `room.json`, open it in the app, then choose Find route. Dimensions
 
 1. Choose Apartment hallway, Corner landing or Blocked corridor, then enter measured room and obstacle dimensions.
 2. Enter furniture length, width, fixed carry height and safety margin. Set start and destination positions and angles.
-3. Find a route. The worker checks clearances without freezing the editor. Replay or scrub the returned poses.
+3. Find a route. The worker checks clearances without freezing the editor. Replay or scrub through the returned poses.
 4. Save the measurements and rechecked route as JSON, share them in a URL hash, or export a dimensioned SVG route sheet.
 
-Measurements are stored in centimetres. You can switch the display to inches. Editing or moving any geometry discards the current route before the next search.
+Measurements are stored in centimetres. You can switch the display to inches. Editing or moving any geometry clears the current route before the next search.
 
 ## Install by host
 
 <details><summary>macOS</summary>
 
-Install Node.js 22.12 or newer and Git. Open Terminal and run `npx github:Arthur031221/Unwedged`. Open the printed loopback address. Stop the server with Ctrl+C.
+Install Node.js 22.12 or newer and Git. Open Terminal and run `npx github:Arthur031221/Unwedged#v1.1.0`. Open the loopback address it prints. Stop the server with Ctrl+C.
 
 </details>
 
 <details><summary>Linux</summary>
 
-Install Node.js 22.12 or newer and Git. Open a terminal and run `npx github:Arthur031221/Unwedged`. Open the printed loopback address. Stop the server with Ctrl+C.
+Install Node.js 22.12 or newer and Git. Open a terminal and run `npx github:Arthur031221/Unwedged#v1.1.0`. Open the loopback address it prints. Stop the server with Ctrl+C.
 
 </details>
 
 <details><summary>Windows</summary>
 
-Install Node.js 22.12 or newer and Git. Open PowerShell and run `npx github:Arthur031221/Unwedged`. Open the printed loopback address. Stop the server with Ctrl+C.
+Install Node.js 22.12 or newer and Git. Open PowerShell and run `npx github:Arthur031221/Unwedged#v1.1.0`. Open the loopback address it prints. Stop the server with Ctrl+C.
 
 </details>
 
@@ -80,7 +84,7 @@ Install Node.js 22.12 or newer and Git. Open PowerShell and run `npx github:Arth
 - `src/core/geometry.ts` computes oriented footprints, doorway gaps and physical clearance.
 - `src/core/verify.ts` certifies each motion interval with adaptive continuous bounds.
 - `src/core/search.ts` runs a deterministic A* search with finite state and time limits.
-- `src/worker.ts` runs search and imported-route verification away from the interface thread.
+- `src/worker.ts` runs search and imported-route verification off the interface thread.
 - `src/locales` contains nine interface translations.
 - `docs/accuracy.md` describes the geometric checks and solver limits.
 

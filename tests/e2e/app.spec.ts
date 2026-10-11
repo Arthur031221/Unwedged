@@ -154,12 +154,16 @@ test("mobile drawer and canvas remain usable in light and dark themes", async ({
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
   await page.getByRole("button", { name: /Measurements/ }).click();
   await expect(page.locator(".sidebar.open")).toBeVisible();
+  await expect(page.locator(".sidebar")).toHaveAttribute("role", "dialog");
+  await expect(page.locator(".sidebar")).toHaveAttribute("aria-modal", "true");
   await expect(page.locator(".primary-btn")).toBeVisible();
-  await page.getByTitle("Dark").click();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.locator(".floorplan")).toBeVisible();
   await page.getByRole("button", { name: "Close" }).click();
   await expect(page.locator(".sidebar")).not.toHaveClass(/open/);
+  await page.getByTitle("Dark").click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.getByRole("button", { name: /Measurements/ }).click();
+  await expect(page.locator(".sidebar.open")).toBeVisible();
+  await page.getByRole("button", { name: "Close" }).click();
   await page.getByTitle("Light").click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });
@@ -290,7 +294,7 @@ test("new walls support removable doors and survive save and reopen after resizi
   await page.locator(".floorplan").click({ position: { x: 140, y: 140 } });
   const editor = page.locator(".door-editor");
   await editor.getByLabel("Structure type").selectOption("wall");
-  await editor.getByRole("checkbox", { name: "Centered doorway" }).check();
+  await editor.getByRole("checkbox", { name: "Doorway" }).check();
   await editor.getByLabel("Width", { exact: true }).fill("20");
   await editor.getByLabel("Depth", { exact: true }).fill("10");
   const saved = page.waitForEvent("download");
@@ -317,7 +321,7 @@ test("new walls support removable doors and survive save and reopen after resizi
   await page.getByRole("button", { name: /obstacle-1/ }).click();
   await page
     .locator(".door-editor")
-    .getByRole("checkbox", { name: "Centered doorway" })
+    .getByRole("checkbox", { name: "Doorway" })
     .uncheck();
   await expect(
     page.locator(".door-editor").getByLabel("Opening width"),
@@ -469,5 +473,95 @@ test("saved half-turn and high-subdivision routes reopen through the actual impo
       page.locator("#route-panel").getByText("Route ready"),
     ).toBeVisible();
     await expect(page.locator(".route-line")).toHaveCount(1);
+  }
+});
+
+test("mobile modal focus, touch placement, keyboard obstacles, and narrow toolbar fit", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+  });
+  const page = await context.newPage();
+  try {
+    await page.goto("/");
+    const opener = page.getByRole("button", { name: /Measurements/ });
+    await opener.click();
+    const dialog = page.getByRole("dialog", { name: "Measurements" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Close" })).toBeFocused();
+    for (let index = 0; index < 40; index += 1) {
+      await page.keyboard.press("Tab");
+      expect(
+        await dialog.evaluate((element) =>
+          element.contains(document.activeElement),
+        ),
+      ).toBe(true);
+    }
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(opener).toBeFocused();
+
+    await opener.click();
+    await dialog.getByRole("button", { name: /Draw obstacle/ }).click();
+    await expect(dialog).toBeHidden();
+    const svg = page.locator(".floorplan");
+    await expect(svg).toBeFocused();
+    const point = await svg.evaluate((element) => {
+      const root = element as SVGSVGElement;
+      const floor = root.querySelector("rect")!;
+      const scale = Number(floor.getAttribute("width")) / 460;
+      const x = Number(floor.getAttribute("x")) + 225 * scale;
+      const y =
+        Number(floor.getAttribute("y")) +
+        Number(floor.getAttribute("height")) -
+        190 * scale;
+      const p = root.createSVGPoint();
+      p.x = x;
+      p.y = y;
+      const mapped = p.matrixTransform(root.getScreenCTM()!);
+      return { x: mapped.x, y: mapped.y };
+    });
+    await page.touchscreen.tap(point.x, point.y);
+    const editor = page.locator(".door-editor");
+    await expect(editor.getByLabel("X")).toHaveValue("225");
+    await expect(editor.getByLabel("Y", { exact: true })).toHaveValue("190");
+
+    await opener.click();
+    await dialog.getByRole("button", { name: "Add obstacle" }).focus();
+    await page.keyboard.press("Enter");
+    const added = page.locator(".door-editor");
+    await expect(added.getByLabel("X")).toHaveValue("230");
+    await expect(added.getByLabel("Y", { exact: true })).toHaveValue("195");
+    await expect(added.getByLabel("Width")).toHaveValue("64");
+    await expect(added.getByLabel("Depth")).toHaveValue("18");
+    await added.getByLabel("Width").fill("70");
+    await added.getByLabel("Width").press("Tab");
+    await expect(added.getByLabel("Width")).toHaveValue("70");
+    await dialog.getByRole("button", { name: "Close" }).click();
+    await page.getByRole("button", { name: "Undo" }).click();
+    await opener.click();
+    const restored = page.locator(".door-editor");
+    await expect(restored.getByLabel("Width")).toHaveValue("64");
+    await dialog.getByRole("button", { name: "Close" }).click();
+    await page.getByRole("button", { name: "Undo" }).click();
+    await expect(page.locator(".obstacle-row")).toHaveCount(2);
+
+    for (const width of [320, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      const scrollWidth = await page.evaluate(
+        () => document.documentElement.scrollWidth,
+      );
+      expect(
+        scrollWidth,
+        `horizontal overflow at ${width}px`,
+      ).toBeLessThanOrEqual(width);
+      await expect(page.getByRole("button", { name: "Undo" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Redo" })).toBeVisible();
+    }
+  } finally {
+    await context.close();
   }
 });

@@ -127,24 +127,28 @@ def raw_obstacles(project):
             )
             continue
         if height > width:
-            gap = min(height, door["width"])
-            rem = (height - gap) / 2
-            if rem > 0:
+            wall_start, wall_end = y - height / 2, y + height / 2
+            opening_center = y + door.get("offset", 0)
+            opening_start = opening_center - door["width"] / 2
+            opening_end = opening_center + door["width"] / 2
+            if opening_start > wall_start:
                 result.append(
-                    box(x - width / 2, y - gap / 2 - rem, x + width / 2, y - gap / 2)
+                    box(x - width / 2, wall_start, x + width / 2, opening_start)
                 )
-                result.append(
-                    box(x - width / 2, y + gap / 2, x + width / 2, y + gap / 2 + rem)
-                )
+            if opening_end < wall_end:
+                result.append(box(x - width / 2, opening_end, x + width / 2, wall_end))
         else:
-            gap = min(width, door["width"])
-            rem = (width - gap) / 2
-            if rem > 0:
+            wall_start, wall_end = x - width / 2, x + width / 2
+            opening_center = x + door.get("offset", 0)
+            opening_start = opening_center - door["width"] / 2
+            opening_end = opening_center + door["width"] / 2
+            if opening_start > wall_start:
                 result.append(
-                    box(x - gap / 2 - rem, y - height / 2, x - gap / 2, y + height / 2)
+                    box(wall_start, y - height / 2, opening_start, y + height / 2)
                 )
+            if opening_end < wall_end:
                 result.append(
-                    box(x + gap / 2, y - height / 2, x + gap / 2 + rem, y + height / 2)
+                    box(opening_end, y - height / 2, wall_end, y + height / 2)
                 )
     return result
 
@@ -174,6 +178,26 @@ def solve_examples():
         project, route = item["project"], item["route"]
         floor = box(0, 0, project["floor"]["width"], project["floor"]["height"])
         obstacles = raw_obstacles(project)
+        if project["name"] in {
+            "Vertical off-centre doorway",
+            "Horizontal off-centre doorway",
+        }:
+            wall = project["rects"][0]
+            centred = {**wall, "door": {**wall["door"], "offset": 0}}
+            centred_obstacles = raw_obstacles({**project, "rects": [centred]})
+            crossing_pose = {
+                "x": (project["start"]["x"] + project["goal"]["x"]) / 2,
+                "y": (project["start"]["y"] + project["goal"]["y"]) / 2,
+                "angle": 0,
+            }
+            crossing_shape = furniture(
+                crossing_pose,
+                project["furniture"]["length"],
+                project["furniture"]["width"],
+            )
+            assert any(
+                crossing_shape.intersects(obstacle) for obstacle in centred_obstacles
+            ), f"{project['name']} centred control unexpectedly clears"
         length, width = project["furniture"]["length"], project["furniture"]["width"]
         measured_min = float("inf")
         samples = 0
