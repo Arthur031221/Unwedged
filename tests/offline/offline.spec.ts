@@ -57,7 +57,7 @@ test("production app, fonts and route worker work offline under /Unwedged/", asy
   expect(
     await page.evaluate(() => document.fonts.check('16px "IBM Plex Sans"')),
   ).toBe(true);
-  await page.getByRole("button", { name: /Find route/ }).click();
+  await page.locator(".quick-find").click();
   await expect(
     page.locator("#route-panel").getByText("Route ready"),
   ).toBeVisible({ timeout: 20000 });
@@ -129,7 +129,7 @@ test("an update waits for existing tabs and preserves their offline worker", asy
     );
     await context.setOffline(true);
     await page.reload();
-    await page.getByRole("button", { name: "Find route" }).click();
+    await page.locator(".quick-find").click();
     await expect(
       page.locator("#route-panel").getByText("Route ready"),
     ).toBeVisible();
@@ -142,7 +142,7 @@ test("an update waits for existing tabs and preserves their offline worker", asy
     await expect
       .poll(() => reopened.evaluate(() => caches.keys()))
       .toEqual([`unwedged:/Unwedged/:${nextVersion}`]);
-    await reopened.getByRole("button", { name: "Find route" }).click();
+    await reopened.locator(".quick-find").click();
     await expect(
       reopened.locator("#route-panel").getByText("Route ready"),
     ).toBeVisible();

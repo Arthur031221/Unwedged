@@ -8,20 +8,17 @@
 
 Find a turning route before the sofa arrives.
 
-A local field sheet for measuring a single-floor layout and checking a rigid rectangular piece in 2D.
-
-**6,408 route poses independently sampled.** The check runs both successful presets and four regression fixtures, then uses Shapely to sample each returned route at 800 intervals per segment. The six routes cover both doorway orientations. [Reproduce the check](CONTRIBUTING.md). Sampling gives evidence about the implementation. The app's verifier separately checks continuous motion in the drawn 2D model.
-
-| Before                                                | After                                                                       |
-| ----------------------------------------------------- | --------------------------------------------------------------------------- |
-| Door width, room, obstacles and carry height measured | A candidate turning route with each motion segment conservatively certified |
-| Turning clearance uncertain                           | Saved measurements, route playback and a dimensioned route sheet to review  |
+A local measurement tool to check whether a rigid rectangular item can turn through a measured single-floor layout.
 
 ![A real browser recording of a furniture route around a wall](assets/demo.gif)
 
-**Try it:** choose Corner landing, change furniture Width from 74 to 75, then use Undo and Redo. Changing measurements clears the route. Find route, then play the result.
+**Try it:** choose Corner landing, then select Find route and Play route at the example width of 74 cm. Change Width to 75 cm and watch the route clear. Use Undo and Redo to review the edit. If bounded search finds no route at 75 cm, that doesn't prove passage is impossible.
 
-Undo and Redo restore grouped measurement edits. Measurements autosave locally so you can recover them on your next visit. Routes aren't included in autosave. If browser storage is unavailable, use Save project to keep a copy. Keyboard users can edit fields. On mobile, open the Measurements panel with its button to edit obstacles. Door openings can be offset along a wall. Offset files use schema version 2, and older clients reject them. Centred version 1 files still work.
+Choose New empty plan for a blank layout, then enter a name in Plan name. Creating it takes one Undo step. Measurements autosave locally. Renaming keeps a verified route. Find route sits beside the plan and changes to Cancel search during a search. Share copies a project link if clipboard access is available. Otherwise, the link stays in the address bar. Each outcome is reported. Measurement headings use the selected unit, and exported route sheets include the plan name in the SVG caption.
+
+A numeric measurement commits its complete value when you leave the field or press Enter. Invalid values get visible, accessible feedback and block search, sharing, saving and export until corrected. Editing wall dimensions keeps the measured doorway width and offset. Conflicting dimensions are rejected. You can undo a successful Open project. A rejected import leaves the current plan and its certified route intact.
+
+Undo and Redo restore grouped measurement edits. Measurements autosave locally and can be recovered on your next visit. Routes aren't included. If browser storage is unavailable, use Save project to keep a copy. Keyboard users can edit fields. On mobile, use the Measurements button to edit obstacles. Door openings can be offset along a wall. Offset files use schema version 2, which older clients reject. Centred version 1 files still work.
 
 Unwedged checks a rigid rectangle moving on one floor. It doesn't model 3D, stairs, tilting, human carriers or deformation. A bounded search can miss a route. It never proves passage is impossible.
 
@@ -32,7 +29,7 @@ The drawing is the model. Measure what you put in it.
 Install Node.js 22.12 or newer and Git. This command downloads the app once, then serves it on your computer at `127.0.0.1`:
 
 ```sh
-npx github:Arthur031221/Unwedged#v1.1.0
+npx github:Arthur031221/Unwedged#v1.2.0
 ```
 
 The browser app bundles its fonts and solver worker. After your first visit, wait for "Offline ready" before relying on the app and route search offline. Project files stay in the browser or downloads. The app makes no runtime API calls.
@@ -63,19 +60,19 @@ Measurements are stored in centimetres. You can switch the display to inches. Ed
 
 <details><summary>macOS</summary>
 
-Install Node.js 22.12 or newer and Git. Open Terminal and run `npx github:Arthur031221/Unwedged#v1.1.0`. Open the loopback address it prints. Stop the server with Ctrl+C.
+Install Node.js 22.12 or newer and Git. Open Terminal and run `npx github:Arthur031221/Unwedged#v1.2.0`. Open the loopback address it prints. Stop the server with Ctrl+C.
 
 </details>
 
 <details><summary>Linux</summary>
 
-Install Node.js 22.12 or newer and Git. Open a terminal and run `npx github:Arthur031221/Unwedged#v1.1.0`. Open the loopback address it prints. Stop the server with Ctrl+C.
+Install Node.js 22.12 or newer and Git. Open a terminal and run `npx github:Arthur031221/Unwedged#v1.2.0`. Open the loopback address it prints. Stop the server with Ctrl+C.
 
 </details>
 
 <details><summary>Windows</summary>
 
-Install Node.js 22.12 or newer and Git. Open PowerShell and run `npx github:Arthur031221/Unwedged#v1.1.0`. Open the loopback address it prints. Stop the server with Ctrl+C.
+Install Node.js 22.12 or newer and Git. Open PowerShell and run `npx github:Arthur031221/Unwedged#v1.2.0`. Open the loopback address it prints. Stop the server with Ctrl+C.
 
 </details>
 

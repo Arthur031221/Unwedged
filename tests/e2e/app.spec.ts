@@ -17,11 +17,16 @@ const findLabels: Record<string, string> = {
 test("turn route can be solved, shared, reopened, replayed and exported", async ({
   page,
 }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
   await page.goto("/");
   await expect(
     page.getByRole("heading", { name: "Corner landing" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: /Find route/ }).click();
+  await page
+    .locator("#route-panel")
+    .getByRole("button", { name: /Find route/ })
+    .click();
   await expect(
     page.locator("#route-panel").getByText("Route ready"),
   ).toBeVisible({ timeout: 15000 });
@@ -43,13 +48,17 @@ test("turn route can be solved, shared, reopened, replayed and exported", async 
   await expect(page.locator(".route-line")).toHaveAttribute("points", /\d/);
   await page.getByRole("button", { name: "Play route" }).click();
   await expect(page.locator(".progress-number")).not.toHaveText("0%");
+  expect(pageErrors).toEqual([]);
 });
 
 test("edits invalidate synchronously and cancel terminates the current search", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Find route/ }).click();
+  await page
+    .locator("#route-panel")
+    .getByRole("button", { name: /Find route/ })
+    .click();
   await page.locator("#furniture").getByLabel("Width").fill("75");
   await expect(page.locator(".route-line")).toHaveCount(0);
   await expect(
@@ -57,11 +66,17 @@ test("edits invalidate synchronously and cancel terminates the current search", 
       .locator(".side-footer")
       .getByRole("button", { name: /Export route sheet/ }),
   ).toBeDisabled();
-  await page.getByRole("button", { name: /Find route/ }).click();
+  await page
+    .locator("#route-panel")
+    .getByRole("button", { name: /Find route/ })
+    .click();
   await expect(
-    page.getByRole("button", { name: "Cancel search" }),
+    page.locator("#route-panel").getByRole("button", { name: "Cancel search" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Cancel search" }).click();
+  await page
+    .locator("#route-panel")
+    .getByRole("button", { name: "Cancel search" })
+    .click();
   await expect(page.locator("#route-panel")).toContainText("Search cancelled");
   await expect(page.locator(".route-line")).toHaveCount(0);
 });
@@ -70,7 +85,10 @@ test("valid imports are rechecked and endpoint tampering is rejected", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Find route/ }).click();
+  await page
+    .locator("#route-panel")
+    .getByRole("button", { name: /Find route/ })
+    .click();
   await expect(
     page.locator("#route-panel").getByText("Route ready"),
   ).toBeVisible({ timeout: 15000 });
@@ -100,7 +118,7 @@ test("valid imports are rechecked and endpoint tampering is rejected", async ({
   await expect(page.locator("#route-panel")).toContainText(
     "Invalid project file",
   );
-  await expect(page.locator(".route-line")).toHaveCount(0);
+  await expect(page.locator(".route-line")).toHaveAttribute("points", /\d/);
 });
 
 test("all nine saved locales expose a translated search action", async ({
@@ -110,7 +128,9 @@ test("all nine saved locales expose a translated search action", async ({
   const picker = page.locator(".toolbar select");
   for (const [locale, label] of Object.entries(findLabels)) {
     await picker.selectOption(locale);
-    await expect(page.getByRole("button", { name: label })).toBeVisible();
+    await expect(
+      page.locator("#route-panel").getByRole("button", { name: label }),
+    ).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", locale);
   }
   await picker.selectOption("zh-TW");
@@ -251,16 +271,21 @@ test("canvas closes a doorway when carry height equals its opening", async ({
     92,
   );
   await doorHeight.fill("74");
+  await doorHeight.press("Tab");
   await expect(jambs).toHaveCount(1);
   await expect(page.locator(".door-label")).toHaveCount(0);
   await doorHeight.fill("74.1");
+  await doorHeight.press("Tab");
   await expect(page.locator(".door-label")).toHaveCount(1);
 });
 
 test("downloaded SVG preserves the measured doorway gap", async ({ page }) => {
   await page.goto("/");
   await page.getByLabel("Measured layout").selectOption("0");
-  await page.getByRole("button", { name: /Find route/ }).click();
+  await page
+    .locator("#route-panel")
+    .getByRole("button", { name: /Find route/ })
+    .click();
   await expect(
     page.locator("#route-panel").getByText("Route ready"),
   ).toBeVisible({ timeout: 15000 });
@@ -295,8 +320,15 @@ test("new walls support removable doors and survive save and reopen after resizi
   const editor = page.locator(".door-editor");
   await editor.getByLabel("Structure type").selectOption("wall");
   await editor.getByRole("checkbox", { name: "Doorway" }).check();
-  await editor.getByLabel("Width", { exact: true }).fill("20");
-  await editor.getByLabel("Depth", { exact: true }).fill("10");
+  const openingWidth = editor.getByLabel("Opening width");
+  await openingWidth.fill("15");
+  await openingWidth.press("Tab");
+  const wallWidth = editor.getByLabel("Width", { exact: true });
+  await wallWidth.fill("20");
+  await wallWidth.press("Tab");
+  const wallDepth = editor.getByLabel("Depth", { exact: true });
+  await wallDepth.fill("10");
+  await wallDepth.press("Tab");
   const saved = page.waitForEvent("download");
   await page
     .locator(".side-footer")
@@ -308,7 +340,7 @@ test("new walls support removable doors and survive save and reopen after resizi
     (rect: { id: string }) => rect.id === "obstacle-1",
   );
   expect(wall.kind).toBe("wall");
-  expect(wall.door.width).toBeLessThan(20);
+  expect(wall.door.width).toBe(15);
   await page.getByLabel("Measured layout").selectOption("0");
   await page.locator('input[type="file"]').setInputFiles({
     name: "resized.json",
@@ -354,7 +386,10 @@ test("README five-line project example imports and solves in the real app", asyn
     buffer: Buffer.from(example!),
   });
   await expect(page.getByRole("heading", { name: "Small room" })).toBeVisible();
-  await page.getByRole("button", { name: "Find route" }).click();
+  await page
+    .locator("#route-panel")
+    .getByRole("button", { name: "Find route" })
+    .click();
   await expect(
     page.locator("#route-panel").getByText("Route ready"),
   ).toBeVisible();
@@ -364,8 +399,14 @@ test("status messages follow a language change after cancellation", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Find route" }).click();
-  await page.getByRole("button", { name: "Cancel search" }).click();
+  await page
+    .locator("#route-panel")
+    .getByRole("button", { name: "Find route" })
+    .click();
+  await page
+    .locator("#route-panel")
+    .getByRole("button", { name: "Cancel search" })
+    .click();
   await page.getByLabel("Language", { exact: true }).selectOption("zh-TW");
   await expect(page.locator("#route-panel")).toContainText("搜尋已取消。");
 });
@@ -397,7 +438,10 @@ test("a narrow route sheet keeps every localized header line within its SVG", as
   await expect(
     page.getByRole("heading", { name: "Narrow room" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Find route" }).click();
+  await page
+    .locator("#route-panel")
+    .getByRole("button", { name: "Find route" })
+    .click();
   await expect(
     page.locator("#route-panel").getByText("Route ready"),
   ).toBeVisible();
@@ -455,7 +499,10 @@ test("saved half-turn and high-subdivision routes reopen through the actual impo
     await expect(
       page.getByRole("heading", { name: project.name, exact: true }),
     ).toBeVisible();
-    await page.getByRole("button", { name: /Find route/ }).click();
+    await page
+      .locator("#route-panel")
+      .getByRole("button", { name: /Find route/ })
+      .click();
     await expect(
       page.locator("#route-panel").getByText("Route ready"),
     ).toBeVisible();
@@ -564,4 +611,28 @@ test("mobile modal focus, touch placement, keyboard obstacles, and narrow toolba
   } finally {
     await context.close();
   }
+});
+
+test("playback tolerates a frame timestamp before its start time", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/");
+  await page.locator(".quick-find").click();
+  await expect(page.locator(".route-line")).toHaveAttribute("points", /\d/);
+  await page.evaluate(() => {
+    const request = window.requestAnimationFrame.bind(window);
+    let first = true;
+    window.requestAnimationFrame = (callback) =>
+      request((timestamp) => {
+        const frameTime = first ? performance.now() - 250 : timestamp;
+        first = false;
+        callback(frameTime);
+      });
+  });
+  await page.getByRole("button", { name: "Play route" }).click();
+  await expect(page.locator(".progress-number")).not.toHaveText("0%");
+  await expect(page.locator(".route-line")).toHaveAttribute("points", /\d/);
+  expect(errors).toEqual([]);
 });

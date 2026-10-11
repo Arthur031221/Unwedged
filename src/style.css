@@ -11,6 +11,8 @@
   --line: #d8e2e9;
   --soft: #f5f8fa;
   --primary: #3157a0;
+  --control-ink: #fff;
+  --wall-ink: #fff;
   --green: #8dcab2;
   --route: #007f72;
   --wall: #50697c;
@@ -30,6 +32,8 @@
   --line: #365162;
   --soft: #243b4b;
   --primary: #91afff;
+  --control-ink: #13232d;
+  --wall-ink: #13232d;
   --green: #74b99d;
   --route: #55c4b5;
   --wall: #718b9d;
@@ -244,7 +248,7 @@ select:focus-visible {
 }
 .unit-pills .picked {
   background: var(--primary);
-  color: #fff;
+  color: var(--control-ink);
 }
 .select-label {
   font-size: 10px;
@@ -253,13 +257,28 @@ select:focus-visible {
   gap: 5px;
   margin: 8px 0 10px;
 }
-.select-label select {
+.select-label select,
+.select-label input {
   height: 34px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
   background: var(--soft);
   color: var(--ink);
   border: 1px solid var(--line);
   padding: 0 9px;
   font-size: 12px;
+}
+.new-plan-btn {
+  min-height: 34px;
+  width: 100%;
+  margin: 0 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--soft);
+  font-size: 11px;
+  text-align: left;
+  padding: 0 10px;
 }
 .input-grid {
   display: grid;
@@ -300,6 +319,12 @@ select:focus-visible {
   position: relative;
   z-index: 1;
 }
+.field-invalid > div {
+  border-color: var(--warn);
+}
+.field input[aria-invalid="true"] {
+  color: var(--warn);
+}
 .field small {
   color: var(--muted);
   font:
@@ -309,6 +334,14 @@ select:focus-visible {
 }
 .field .field-help {
   line-height: 1.4;
+}
+.field .field-error {
+  color: var(--warn);
+  line-height: 1.4;
+  font:
+    10px/1.4 "IBM Plex Sans",
+    sans-serif;
+  padding: 0;
 }
 .tool-row {
   display: flex;
@@ -449,7 +482,7 @@ select:focus-visible {
   align-items: center;
   padding: 0 13px;
   background: var(--primary);
-  color: #fff;
+  color: var(--control-ink);
   border: 0;
   font-size: 13px;
   font-weight: 500;
@@ -491,7 +524,7 @@ select:focus-visible {
   width: 18px;
   height: 18px;
   background: var(--route);
-  color: white;
+  color: var(--control-ink);
   display: grid;
   place-items: center;
 }
@@ -544,16 +577,49 @@ select:focus-visible {
 }
 .canvas-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 14px;
   margin: 0 auto 13px;
   width: min(100%, 900px);
 }
+.canvas-head > div:first-child {
+  flex: 1;
+  min-width: 140px;
+}
+.quick-find {
+  min-height: 36px;
+  max-width: 100%;
+  padding: 8px 12px;
+  background: var(--primary);
+  color: var(--control-ink);
+  border: 0;
+  font-size: 12px;
+}
+.share-notice:empty {
+  display: none;
+}
+.share-notice {
+  padding: 10px 22px;
+  background: var(--soft);
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
 .canvas-head h2 {
+  overflow-wrap: anywhere;
   font-weight: 500;
   font-size: 19px;
   margin: 4px 0 0;
   letter-spacing: -0.025em;
+}
+.canvas-status {
+  margin: 0 auto 12px;
+  width: min(100%, 900px);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 .measure-chip {
   margin-left: auto;
@@ -599,7 +665,7 @@ select:focus-visible {
 }
 .wall-label,
 .door-label {
-  fill: white !important;
+  fill: var(--wall-ink) !important;
   font-size: 8px !important;
 }
 .door-label {
@@ -702,7 +768,7 @@ select:focus-visible {
   height: 30px;
   border: 0;
   background: var(--primary);
-  color: white;
+  color: var(--control-ink);
 }
 .transport-controls input {
   flex: 1;
@@ -866,6 +932,10 @@ select:focus-visible {
   }
   .canvas-head h2 {
     font-size: 16px;
+  }
+  .quick-find {
+    order: 2;
+    width: 100%;
   }
   .eyebrow {
     font-size: 8px;

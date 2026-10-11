@@ -8,20 +8,17 @@
 
 Finde eine Route mit Kurve, bevor das Sofa ankommt.
 
-Ein lokales Messblatt für einen Grundriss auf einer Ebene, mit dem sich ein starrer rechteckiger Gegenstand in 2D prüfen lässt.
-
-**6.408 Routenposen unabhängig abgetastet.** Die Prüfung führt beide erfolgreichen Voreinstellungen und vier Regressionstests aus. Anschließend tastet sie jede zurückgegebene Route mit Shapely in 800 Intervallen pro Segment ab. Die sechs Routen umfassen beide Türausrichtungen. [Prüfung nachvollziehen](CONTRIBUTING.md). Die Abtastung liefert Hinweise zur Implementierung. Der App-Verifizierer prüft die kontinuierliche Bewegung im gezeichneten 2D-Modell.
-
-| Vorher                                            | Nachher                                                                             |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Türbreite, Raum, Hindernisse und Tragehöhe messen | Eine mögliche Wenderoute, deren jedes Bewegungssegment konservativ zertifiziert ist |
-| Unklar, ob eine Kurve passt                       | Gespeicherte Messwerte, Routenvorschau und ein bemaßter Routenplan zur Prüfung      |
+Ein lokales Messwerkzeug, um zu prüfen, ob sich ein starres rechteckiges Möbelstück durch einen vermessenen Grundriss auf einer Ebene drehen lässt.
 
 ![Echte Browseraufnahme einer Möbelroute um eine Wand](assets/demo.gif)
 
-**Zum Ausprobieren:** Wähle Corner landing, ändere die Möbelbreite von 74 auf 75 und verwende Undo und Redo. Bei einer Messwertänderung wird die Route verworfen. Wähle Find route und spiele anschließend das Ergebnis ab.
+**Ausprobieren:** Wähle Eckpodest und dann Route suchen und Route abspielen bei der Beispielbreite von 74 cm. Ändere Breite auf 75 cm. Die aktuelle Route wird gelöscht. Mit Rückgängig und Wiederholen kannst du die Änderung nachvollziehen. Findet die begrenzte Suche bei 75 cm keine Route, beweist das nicht, dass kein Durchgang möglich ist.
 
-Undo und Redo stellen zusammengefasste Messwertänderungen wieder her. Messwerte werden lokal automatisch gespeichert und können beim nächsten Besuch wiederhergestellt werden. Routen sind nicht Teil dieser Speicherung. Wenn der Browser keinen Speicher bereitstellt, verwende Save project, um eine Kopie zu behalten. Tastaturbenutzer können die Felder bearbeiten. Auf Mobilgeräten öffnet die Schaltfläche Measurements das Bedienfeld zum Bearbeiten von Hindernissen. Türöffnungen lassen sich entlang einer Wand verschieben. Dateien mit versetzten Öffnungen verwenden Schema-Version 2 und werden von älteren Clients abgelehnt. Dateien der Version 1 mit mittiger Öffnung werden weiterhin akzeptiert.
+Wähle Neuen leeren Plan erstellen für einen leeren Grundriss und gib unter Planname einen Namen ein. Das Erstellen ist ein Schritt für Rückgängig, und Messwerte werden lokal gespeichert. Beim Umbenennen bleibt eine verifizierte Route erhalten. Route suchen steht neben dem Plan und wird während der Suche zu Suche abbrechen. Teilen kopiert den Projektlink, wenn die Zwischenablage verfügbar ist. Andernfalls bleibt er in der Adresszeile. Beide Ergebnisse werden gemeldet. Überschriften zeigen die gewählte Einheit. Die SVG-Beschriftung des Routenplans enthält den Plannamen.
+
+Ein Zahlenwert wird beim Verlassen des Feldes oder mit Enter vollständig übernommen. Ungültige Werte erhalten eine sichtbare, barrierefrei angekündigte Meldung und sperren Suche, Teilen, Speichern und Export bis zur Korrektur. Beim Ändern der Wandmaße bleiben gemessene Türbreite und Versatz erhalten. Widersprüchliche Maße werden abgelehnt. Ein erfolgreich geöffnetes Projekt lässt sich rückgängig machen. Ein abgelehnter Import lässt Grundriss und zertifizierte Route unverändert.
+
+Rückgängig und Wiederholen stellen zusammengefasste Messwertänderungen wieder her. Messwerte werden lokal gespeichert und können beim nächsten Besuch wiederhergestellt werden. Routen sind nicht enthalten. Wenn der Browser keinen Speicher bereitstellt, verwende Projekt speichern. Die Felder lassen sich per Tastatur bearbeiten. Auf Mobilgeräten öffnet Maße das Bedienfeld für Hindernisse. Türöffnungen lassen sich entlang einer Wand verschieben. Dateien mit Versatz verwenden Schema-Version 2 und werden von älteren Clients abgelehnt. Dateien der Version 1 mit mittiger Öffnung bleiben kompatibel.
 
 Unwedged prüft einen starren rechteckigen Gegenstand, der sich auf einer Ebene bewegt. 3D, Treppen, Kippen, tragende Personen und Verformung werden nicht modelliert. Eine begrenzte Suche kann eine Route übersehen. Sie beweist niemals, dass ein Durchgang unmöglich ist.
 
@@ -32,7 +29,7 @@ Die Zeichnung ist das Modell. Miss, was du einzeichnest.
 Installiere Node.js 22.12 oder neuer. Dieser Befehl lädt die App einmal herunter und stellt sie anschließend auf diesem Computer unter `127.0.0.1` bereit: Git muss ebenfalls installiert sein.
 
 ```sh
-npx github:Arthur031221/Unwedged#v1.1.0
+npx github:Arthur031221/Unwedged#v1.2.0
 ```
 
 Die Browser-App enthält ihre Schriftdateien und den Solver-Worker. Warte nach dem ersten Aufruf auf die Anzeige "Offline bereit", bevor du dich auf die Offline-Nutzung der App und Routensuche verlässt. Projektdateien bleiben im Browser oder im Download-Ordner. Die App ruft während der Nutzung keine API auf.
@@ -63,19 +60,19 @@ Messwerte werden in Zentimetern gespeichert. Die Anzeige lässt sich auf Zoll um
 
 <details><summary>macOS</summary>
 
-Installiere Node.js 22.12 oder neuer, öffne Terminal und führe `npx github:Arthur031221/Unwedged#v1.1.0` aus. Öffne die angezeigte Loopback-Adresse. Beende den Server mit Ctrl+C. Git muss ebenfalls installiert sein.
+Installiere Node.js 22.12 oder neuer, öffne Terminal und führe `npx github:Arthur031221/Unwedged#v1.2.0` aus. Öffne die angezeigte Loopback-Adresse. Beende den Server mit Ctrl+C. Git muss ebenfalls installiert sein.
 
 </details>
 
 <details><summary>Linux</summary>
 
-Installiere Node.js 22.12 oder neuer, öffne ein Terminal und führe `npx github:Arthur031221/Unwedged#v1.1.0` aus. Öffne die angezeigte Loopback-Adresse. Beende den Server mit Ctrl+C. Git muss ebenfalls installiert sein.
+Installiere Node.js 22.12 oder neuer, öffne ein Terminal und führe `npx github:Arthur031221/Unwedged#v1.2.0` aus. Öffne die angezeigte Loopback-Adresse. Beende den Server mit Ctrl+C. Git muss ebenfalls installiert sein.
 
 </details>
 
 <details><summary>Windows</summary>
 
-Installiere Node.js 22.12 oder neuer, öffne PowerShell und führe `npx github:Arthur031221/Unwedged#v1.1.0` aus. Öffne die angezeigte Loopback-Adresse. Beende den Server mit Ctrl+C. Git muss ebenfalls installiert sein.
+Installiere Node.js 22.12 oder neuer, öffne PowerShell und führe `npx github:Arthur031221/Unwedged#v1.2.0` aus. Öffne die angezeigte Loopback-Adresse. Beende den Server mit Ctrl+C. Git muss ebenfalls installiert sein.
 
 </details>
 

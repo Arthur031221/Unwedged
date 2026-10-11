@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0
+
+- Commit complete numeric measurements on blur or Enter, with accessible validation that blocks search, sharing, saving and export until corrected. Preserve measured doorway width and offset when wall dimensions change, and reject conflicting dimensions. Successful project opens are undoable. Rejected imports preserve the current plan and certified route.
+- Add named empty plans, with Undo, Redo and local autosave. Renaming a plan keeps a verified route.
+- Put Find route beside the plan and show Cancel search while a search is running.
+- Report clipboard success separately from a link left in the address bar when clipboard access is blocked or missing.
+- Match measurement headings to the selected unit and include the plan name in exported SVG captions.
+
 ## 1.1.0
 
 - Add grouped Undo and Redo, local measurement autosave and recovery, with a Save project fallback when browser storage is unavailable. Routes are not included in autosaved drafts.

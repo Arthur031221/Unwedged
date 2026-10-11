@@ -92,7 +92,10 @@ test("geometry undo invalidates a route and a running stale search", async ({
 }) => {
   await clearDraft(page);
   await page.goto("/");
-  await page.getByRole("button", { name: /Find route/ }).click();
+  await page
+    .locator("#route-panel")
+    .getByRole("button", { name: /Find route/ })
+    .click();
   await expect(page.locator("#route-panel")).toContainText("Route ready", {
     timeout: 30000,
   });
@@ -101,7 +104,10 @@ test("geometry undo invalidates a route and a running stale search", async ({
   await expect(page.locator(".route-line")).toHaveCount(0);
   await page.getByRole("button", { name: "Undo" }).click();
   await expect(page.locator(".route-line")).toHaveCount(0);
-  await page.getByRole("button", { name: /Find route/ }).click();
+  await page
+    .locator("#route-panel")
+    .getByRole("button", { name: /Find route/ })
+    .click();
   await page.locator("#furniture").getByLabel("Length").fill("151");
   await page.waitForTimeout(500);
   await expect(page.locator(".route-line")).toHaveCount(0);
@@ -122,7 +128,9 @@ test("reload restores validated measurements, while corrupt storage falls back s
   await expect(page.locator("#furniture").getByLabel("Width")).toHaveValue(
     "91",
   );
-  await expect(page.getByRole("status")).toContainText("Measurements restored");
+  await expect(page.locator(".autosave-status")).toContainText(
+    "Measurements restored",
+  );
   await page.evaluate(() => localStorage.setItem("unwedged-draft", "{broken"));
   await page.reload();
   await expect(page.locator("#furniture").getByLabel("Width")).toHaveValue(
@@ -144,9 +152,12 @@ test("storage denial keeps editing available and advises saving a project", asyn
   await page.goto("/");
   const width = page.locator("#furniture").getByLabel("Width");
   await width.fill("82");
+  await width.press("Tab");
   await expect(width).toHaveValue("82");
-  await expect(page.getByRole("status")).toContainText("Autosave unavailable");
-  await expect(page.getByRole("status")).toContainText("Save project");
+  await expect(page.locator(".autosave-status")).toContainText(
+    "Autosave unavailable",
+  );
+  await expect(page.locator(".autosave-status")).toContainText("Save project");
 });
 
 test("shared URL takes precedence over a local draft", async ({ page }) => {
@@ -170,7 +181,9 @@ test("shared URL takes precedence over a local draft", async ({ page }) => {
   expect(
     await page.evaluate(() => localStorage.getItem("unwedged-draft")),
   ).toBe(exportJson(local));
-  await page.locator("#furniture").getByLabel("Width").fill("89");
+  const width = page.locator("#furniture").getByLabel("Width");
+  await width.fill("89");
+  await width.press("Tab");
   await expect
     .poll(() =>
       page.evaluate(

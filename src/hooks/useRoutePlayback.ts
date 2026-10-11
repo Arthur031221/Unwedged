@@ -29,7 +29,7 @@ export function useRoutePlayback(route: Route | null, initialPose: Pose) {
     const startedAt = performance.now() - progressRef.current * duration;
     let frame = 0;
     const tick = (now: number) => {
-      const next = Math.min(1, (now - startedAt) / duration);
+      const next = Math.max(0, Math.min(1, (now - startedAt) / duration));
       updateProgress(next);
       if (next === 1) setPlaying(false);
       else frame = requestAnimationFrame(tick);
