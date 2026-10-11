@@ -10,7 +10,7 @@
 
 這是一份本機使用的現場量測表，用來測量單層格局，並以 2D 檢查剛性矩形物件。
 
-**已獨立檢查 3,204 個路線姿態。** 檢查方式如下。執行兩個成功的預設案例，再使用 Shapely 將每個回傳的線段取樣 800 個間隔。[重現這項檢查](CONTRIBUTING.md)。取樣用來測試實作，驗證器則檢查繪製的 2D 模型中的連續運動。
+**獨立取樣檢查了 6,408 個路線姿態。** 檢查會執行兩個成功預設和四個回歸案例，接著使用 Shapely 對每條回傳路線的每個線段取樣 800 個間隔。六條路線涵蓋兩種門洞方向。[重現檢查](CONTRIBUTING.md)。取樣結果提供實作檢查的證據。應用程式驗證器會另外檢查繪製的 2D 模型中的連續運動。
 
 | 之前                             | 之後                                             |
 | -------------------------------- | ------------------------------------------------ |
@@ -18,6 +18,10 @@
 | 不確定能否轉彎通過               | 可供檢視的已儲存量測、路線播放和標註尺寸的路線圖 |
 
 ![家具路線繞過牆面的實際瀏覽器錄影](assets/demo.gif)
+
+**試用步驟：** 選擇 Corner landing，將家具寬度從 74 改為 75，再使用 Undo 和 Redo。量測值變更時路線會清除。搜尋路線後播放結果。
+
+Undo 和 Redo 會還原成組的量測編輯。量測值會自動儲存在本機，並可於下次造訪時還原。自動儲存不包含路線。如果瀏覽器儲存空間無法使用，請用 Save project 儲存一份副本。鍵盤使用者可以編輯欄位。在行動裝置上，Measurements 按鈕會開啟障礙物編輯面板。門洞可沿著牆面調整位置。含偏移門洞的檔案使用 schema version 2，舊版用戶端會拒絕這類檔案。置中的 version 1 檔案仍可開啟。
 
 Unwedged 檢查在同一樓層移動的剛性矩形物件。它不模擬 3D、樓梯、傾斜、搬運者或物件變形。有限搜尋可能會漏掉路線，也永遠不會證明物件無法通過。
 
@@ -28,7 +32,7 @@ Unwedged 檢查在同一樓層移動的剛性矩形物件。它不模擬 3D、�
 安裝 Node.js 22.12 或更新版本。以下指令會下載一次應用程式，接著在這台電腦的 `127.0.0.1` 提供服務： 也需要安裝 Git。
 
 ```sh
-npx github:Arthur031221/Unwedged
+npx github:Arthur031221/Unwedged#v1.1.0
 ```
 
 瀏覽器應用程式內含字型和求解器工作執行緒。首次造訪後，請等候「離線就緒」指示出現，再依賴離線使用應用程式和路線搜尋。專案檔留在瀏覽器或下載資料夾中。應用程式執行期間不會呼叫 API。
@@ -59,19 +63,19 @@ npx github:Arthur031221/Unwedged
 
 <details><summary>macOS</summary>
 
-安裝 Node.js 22.12 或更新版本，開啟 Terminal 並執行 `npx github:Arthur031221/Unwedged`。開啟顯示的迴路位址。按 Ctrl+C 停止伺服器。 也需要安裝 Git。
+安裝 Node.js 22.12 或更新版本，開啟 Terminal 並執行 `npx github:Arthur031221/Unwedged#v1.1.0`。開啟顯示的迴路位址。按 Ctrl+C 停止伺服器。 也需要安裝 Git。
 
 </details>
 
 <details><summary>Linux</summary>
 
-安裝 Node.js 22.12 或更新版本，開啟終端機並執行 `npx github:Arthur031221/Unwedged`。開啟顯示的迴路位址。按 Ctrl+C 停止伺服器。 也需要安裝 Git。
+安裝 Node.js 22.12 或更新版本，開啟終端機並執行 `npx github:Arthur031221/Unwedged#v1.1.0`。開啟顯示的迴路位址。按 Ctrl+C 停止伺服器。 也需要安裝 Git。
 
 </details>
 
 <details><summary>Windows</summary>
 
-安裝 Node.js 22.12 或更新版本，開啟 PowerShell 並執行 `npx github:Arthur031221/Unwedged`。開啟顯示的迴路位址。按 Ctrl+C 停止伺服器。 也需要安裝 Git。
+安裝 Node.js 22.12 或更新版本，開啟 PowerShell 並執行 `npx github:Arthur031221/Unwedged#v1.1.0`。開啟顯示的迴路位址。按 Ctrl+C 停止伺服器。 也需要安裝 Git。
 
 </details>
 

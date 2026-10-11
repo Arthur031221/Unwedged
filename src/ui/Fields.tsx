@@ -1,17 +1,41 @@
+import { useEffect, useRef, useState } from "react";
 import type { Project } from "../core/schema";
 import { messages, type Locale } from "../locales";
+
+const formatValue = (n: number) =>
+  String(Number.isFinite(n) ? Number(n.toFixed(2)) : 0);
 
 export function Field({
   label,
   value,
   onChange,
   unit,
+  help,
 }: {
   label: string;
   value: number;
   onChange: (n: number) => void;
   unit: string;
+  help?: string;
 }) {
+  const [draft, setDraft] = useState(() => formatValue(value));
+  const editing = useRef(false);
+  const previousUnit = useRef(unit);
+
+  useEffect(() => {
+    if (previousUnit.current !== unit) {
+      previousUnit.current = unit;
+      setDraft(formatValue(value));
+    } else if (!editing.current) {
+      setDraft(formatValue(value));
+    }
+  }, [unit, value]);
+
+  const normalize = () => {
+    editing.current = false;
+    setDraft(formatValue(value));
+  };
+
   return (
     <label className="field">
       <span>{label}</span>
@@ -19,13 +43,28 @@ export function Field({
         <input
           type="number"
           aria-label={label}
-          aria-description={unit}
+          aria-description={help ? `${unit}. ${help}` : unit}
           step="0.1"
-          value={Number.isFinite(value) ? Number(value.toFixed(2)) : 0}
-          onChange={(e) => onChange(Number(e.target.value))}
+          value={draft}
+          onFocus={() => {
+            editing.current = true;
+          }}
+          onChange={(e) => {
+            editing.current = true;
+            const next = e.currentTarget.value;
+            setDraft(next);
+            if (next.trim() === "") return;
+            const number = Number(next);
+            if (Number.isFinite(number)) onChange(number);
+          }}
+          onBlur={normalize}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") normalize();
+          }}
         />
         <small>{unit}</small>
       </div>
+      {help && <small className="field-help">{help}</small>}
     </label>
   );
 }
@@ -93,7 +132,7 @@ export function RectEditor({
                 update({ door: event.target.checked ? d : undefined })
               }
             />
-            {t.centeredDoor}
+            {t.doorway}
           </label>
           {rect.door && (
             <>
@@ -108,6 +147,13 @@ export function RectEditor({
                 value={shown(d.height)}
                 unit={unit}
                 onChange={(n) => update({ door: { ...d, height: conv(n) } })}
+              />
+              <Field
+                label={t.openingOffset}
+                value={shown(d.offset ?? 0)}
+                unit={unit}
+                help={t.openingOffsetHelp}
+                onChange={(n) => update({ door: { ...d, offset: conv(n) } })}
               />
             </>
           )}

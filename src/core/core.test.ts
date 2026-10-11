@@ -46,6 +46,60 @@ describe("geometry and certificate", () => {
     expect(expanded(horizontal, 70).map((r) => r.width)).toEqual([30, 30]);
     expect(expanded(horizontal, 200)).toHaveLength(1);
   });
+  it("places unequal jambs from off-centre openings in both orientations", () => {
+    const vertical = {
+      id: "v",
+      x: 10,
+      y: 20,
+      width: 12,
+      height: 100,
+      kind: "wall" as const,
+      door: { width: 40, height: 190, offset: 10 },
+    };
+    const horizontal = {
+      ...vertical,
+      id: "h",
+      width: 100,
+      height: 12,
+      door: { ...vertical.door, offset: -10 },
+    };
+    expect(expanded(vertical, 70).map(({ y, height }) => [y, height])).toEqual([
+      [-10, 40],
+      [60, 20],
+    ]);
+    expect(expanded(horizontal, 70).map(({ x, width }) => [x, width])).toEqual([
+      [-30, 20],
+      [40, 40],
+    ]);
+  });
+  it("allows a flush opening, omits its zero jamb, and closes at the height limit", () => {
+    const wall = {
+      id: "flush",
+      x: 50,
+      y: 50,
+      width: 20,
+      height: 100,
+      kind: "wall" as const,
+      door: { width: 40, height: 190, offset: 30 },
+    };
+    expect(expanded(wall, 70)).toHaveLength(1);
+    expect(expanded(wall, 190)).toEqual([wall]);
+  });
+  it("retains a positive jamb smaller than the collision tolerance", () => {
+    const wall = {
+      id: "tiny-jamb",
+      x: 50,
+      y: 50,
+      width: 20,
+      height: 100,
+      kind: "wall" as const,
+      door: { width: 40, height: 190, offset: 30 - 1e-8 },
+    };
+    const parts = expanded(wall, 70);
+    expect(parts).toHaveLength(2);
+    expect(parts[1]!.height).toBeGreaterThan(0);
+    expect(parts[1]!.height).toBeLessThan(1e-7);
+  });
   it("keeps angles across the +/- pi seam short", () => {
     expect(Math.abs(shortAngle(Math.PI - 0.01, -Math.PI + 0.01))).toBeLessThan(
       0.03,
@@ -96,6 +150,30 @@ describe("geometry and certificate", () => {
     const result = certifyPath([p.start, p.goal], p);
     expect(result.ok).toBe(false);
   });
+  it("changes clearance and certification when the opening moves off centre", () => {
+    const p = structuredClone(presets[0]!);
+    p.floor = { width: 500, height: 400 };
+    p.furniture = { length: 60, width: 40, height: 70 };
+    p.margin = 2;
+    p.start = { x: 100, y: 270, angle: 0 };
+    p.goal = { x: 400, y: 270, angle: 0 };
+    p.rects = [
+      {
+        id: "wall",
+        x: 250,
+        y: 200,
+        width: 20,
+        height: 400,
+        kind: "wall",
+        door: { width: 100, height: 190, offset: 70 },
+      },
+    ];
+    p.schemaVersion = 2;
+    expect(certifyPath([p.start, p.goal], p).ok).toBe(true);
+    p.rects[0]!.door!.offset = 0;
+    expect(clearance({ x: 250, y: 270, angle: 0 }, p)).toBeLessThanOrEqual(0);
+    expect(certifyPath([p.start, p.goal], p).ok).toBe(false);
+  });
 });
 describe("serialization and locales", () => {
   it("round trips a project and rejects tampering with route data", () => {
@@ -115,6 +193,97 @@ describe("serialization and locales", () => {
     );
     raw.route.poses[1].x = 999;
     expect(() => importJson(JSON.stringify(raw))).toThrow();
+  });
+  it("exports positioned openings as version 2 and accepts centred version 1", () => {
+    const p = structuredClone(presets[0]!);
+    p.floor = { width: 500, height: 400 };
+    p.furniture = { length: 60, width: 40, height: 70 };
+    p.start = { x: 100, y: 270, angle: 0 };
+    p.goal = { x: 400, y: 270, angle: 0 };
+    p.rects = [
+      {
+        id: "wall",
+        x: 250,
+        y: 200,
+        width: 20,
+        height: 400,
+        kind: "wall",
+        door: { width: 100, height: 190, offset: 70 },
+      },
+    ];
+    p.schemaVersion = 2;
+    const route = {
+      poses: [p.start, p.goal],
+      clearance: 1,
+      explored: 0,
+      elapsedMs: 0,
+      step: 1,
+      angleStep: 1,
+      verified: true as const,
+    };
+    const raw = exportJson(p, route);
+    expect(JSON.parse(raw).schemaVersion).toBe(2);
+    expect(importJson(raw)).toMatchObject({
+      schemaVersion: 2,
+      project: p,
+      route: { poses: [p.start, p.goal] },
+    });
+    const movedOpening = JSON.parse(raw);
+    movedOpening.project.rects[0].door.offset = 0;
+    expect(() => importJson(JSON.stringify(movedOpening))).toThrow(
+      "Saved route failed re-verification",
+    );
+    const legacy = structuredClone(presets[0]!);
+    expect(importJson(exportJson(legacy)).schemaVersion).toBe(1);
+    legacy.rects.find((rect) => rect.door)!.kind = "obstacle";
+    expect(() => importJson(exportJson(legacy))).not.toThrow();
+    const centredV2 = structuredClone(p);
+    centredV2.rects[0]!.door!.offset = 0;
+    const minimal = JSON.parse(exportJson(centredV2));
+    expect(minimal.schemaVersion).toBe(1);
+    expect(minimal.project.schemaVersion).toBe(1);
+    const v1Offset = JSON.parse(exportJson(p));
+    v1Offset.schemaVersion = 1;
+    v1Offset.project.schemaVersion = 1;
+    expect(() => importJson(JSON.stringify(v1Offset))).toThrow();
+    const bad = JSON.parse(exportJson(p));
+    bad.project.rects[0].door.offset = 170;
+    expect(() => importJson(JSON.stringify(bad))).toThrow();
+    bad.project.rects[0].door.offset = "NaN";
+    expect(() => importJson(JSON.stringify(bad))).toThrow();
+    bad.project.rects[0].door.offset = 70;
+    bad.project.schemaVersion = 1;
+    expect(() => importJson(JSON.stringify(bad))).toThrow();
+  });
+  it("exports exact SVG jamb positions", () => {
+    const p = structuredClone(presets[0]!);
+    p.rects = [
+      {
+        id: "wall",
+        x: 250,
+        y: 200,
+        width: 20,
+        height: 400,
+        kind: "wall",
+        door: { width: 100, height: 190, offset: 70 },
+      },
+    ];
+    const svg = routeSvg(p, {
+      poses: [p.start, p.goal],
+      clearance: 1,
+      explored: 0,
+      elapsedMs: 0,
+      step: 1,
+      angleStep: 1,
+      verified: true,
+    });
+    const height = Number(svg.match(/height="([\d.]+)" viewBox/)?.[1]);
+    expect(svg).toContain(
+      `<rect x="408" y="${height - 48 - 220 * 1.5}" width="30" height="330" fill="#50697c"/>`,
+    );
+    expect(svg).toContain(
+      `<rect x="408" y="${height - 48 - 400 * 1.5}" width="30" height="120" fill="#50697c"/>`,
+    );
   });
   it("escapes project labels in a generated SVG sheet", () => {
     const project = { ...structuredClone(presets[0]!), name: 'Room <A> & "B"' };

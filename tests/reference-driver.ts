@@ -16,19 +16,63 @@ nearMargin.name = "Saved near-margin regression";
 nearMargin.rects = [];
 nearMargin.start.y = nearMargin.goal.y = 43.01;
 
-const results = [presets[0]!, presets[1]!, halfTurn, nearMargin].map(
-  (project) => {
-    const result = solve(project, {
-      fine: false,
-      timeoutMs: 30000,
-      maxStates: 65000,
-    });
-    if (result.status !== "found")
-      throw new Error(`${project.name}: ${result.status}`);
-    const imported = importJson(exportJson(project, result.route));
-    if (!imported.route)
-      throw new Error(`${project.name}: route missing after import`);
-    return { project: imported.project, route: imported.route };
+const verticalOffset = structuredClone(presets[0]!);
+verticalOffset.name = "Vertical off-centre doorway";
+verticalOffset.schemaVersion = 2;
+verticalOffset.floor = { width: 500, height: 400 };
+verticalOffset.furniture = { length: 60, width: 40, height: 70 };
+verticalOffset.margin = 2;
+verticalOffset.start = { x: 100, y: 270, angle: 0 };
+verticalOffset.goal = { x: 400, y: 270, angle: 0 };
+verticalOffset.rects = [
+  {
+    id: "vertical-door",
+    x: 250,
+    y: 200,
+    width: 20,
+    height: 400,
+    kind: "wall",
+    door: { width: 100, height: 190, offset: 70 },
   },
-);
+];
+const horizontalOffset = structuredClone(presets[0]!);
+horizontalOffset.name = "Horizontal off-centre doorway";
+horizontalOffset.schemaVersion = 2;
+horizontalOffset.floor = { width: 500, height: 400 };
+horizontalOffset.furniture = { length: 60, width: 40, height: 70 };
+horizontalOffset.margin = 2;
+horizontalOffset.start = { x: 170, y: 80, angle: 0 };
+horizontalOffset.goal = { x: 170, y: 320, angle: 0 };
+horizontalOffset.rects = [
+  {
+    id: "horizontal-door",
+    x: 250,
+    y: 200,
+    width: 500,
+    height: 20,
+    kind: "wall",
+    door: { width: 100, height: 190, offset: -80 },
+  },
+];
+
+const results = [
+  presets[0]!,
+  presets[1]!,
+  halfTurn,
+  nearMargin,
+  verticalOffset,
+  horizontalOffset,
+].map((project) => {
+  const result = solve(project, {
+    fine: false,
+    timeoutMs: 30000,
+    maxStates: 65000,
+  });
+  if (result.status !== "found")
+    throw new Error(`${project.name}: ${result.status}`);
+  const imported = importJson(exportJson(project, result.route));
+  if (!imported.route)
+    throw new Error(`${project.name}: route missing after import`);
+  return { project: imported.project, route: imported.route };
+});
 console.log(JSON.stringify(results));

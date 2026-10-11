@@ -82,6 +82,15 @@ test("production app, fonts and route worker work offline under /Unwedged/", asy
     ).toBeLessThanOrEqual(320);
     const box = await page.locator(".toolbar").boundingBox();
     expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+    const textRight = await page
+      .locator(".brand strong")
+      .evaluate((element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return range.getBoundingClientRect().right;
+      });
+    const undoBox = await page.locator(".history-btn").first().boundingBox();
+    expect(textRight).toBeLessThanOrEqual(undoBox!.x - 4);
     const shown = await picker.locator("option:checked").textContent();
     expect(shown).not.toBe(locale);
   }

@@ -118,6 +118,26 @@ select:focus-visible {
   align-items: center;
   gap: 9px;
 }
+.history-btn {
+  width: 30px;
+  height: 34px;
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  font-size: 19px;
+}
+.history-btn:disabled {
+  opacity: 0.4;
+}
+.autosave-status {
+  margin: 0 16px 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.autosave-status.unavailable {
+  color: var(--warn);
+}
 .toolbar select,
 .icon-btn,
 .share-btn {
@@ -274,12 +294,21 @@ select:focus-visible {
     monospace;
   outline: none;
 }
+.field input:focus-visible {
+  outline: 3px solid #73a2ff;
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
+}
 .field small {
   color: var(--muted);
   font:
     9px "IBM Plex Mono",
     monospace;
   padding-right: 7px;
+}
+.field .field-help {
+  line-height: 1.4;
 }
 .tool-row {
   display: flex;
@@ -339,6 +368,16 @@ select:focus-visible {
 }
 .text-btn.danger {
   color: var(--warn);
+}
+.obstacle-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.obstacle-actions .text-btn {
+  min-height: 30px;
+  padding: 4px 6px;
+  white-space: nowrap;
 }
 .empty-note {
   font-size: 11px;
@@ -783,15 +822,17 @@ select:focus-visible {
   }
   .brand {
     flex: 1;
+    gap: 7px;
   }
   .brand small {
     font-size: 9px;
   }
   .toolbar {
-    flex: 0 0 170px;
+    flex: 0 0 232px;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 5px;
+    gap: 4px;
+    row-gap: 3px;
   }
   .offline-ready {
     flex: 0 0 100%;
@@ -802,8 +843,8 @@ select:focus-visible {
     line-height: 1.1;
   }
   .toolbar select {
-    width: 94px;
-    max-width: 94px;
+    width: 88px;
+    max-width: 88px;
     padding: 0 4px;
   }
   .share-btn {
@@ -930,6 +971,15 @@ select:focus-visible {
   }
 }
 @media (max-width: 390px) {
+  .topbar {
+    padding-inline: 10px;
+  }
+  .toolbar {
+    flex-basis: 224px;
+  }
+  .brand strong {
+    font-size: 15px;
+  }
   .main-panel {
     padding-inline: 8px;
   }
@@ -946,8 +996,19 @@ select:focus-visible {
   .toolbar .icon-btn {
     width: 32px;
   }
+  .history-btn {
+    width: 27px;
+  }
+  .brand small {
+    display: none;
+  }
   .field input {
     padding: 0 5px;
+  }
+}
+@media (max-width: 350px) {
+  .brand-mark {
+    display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -88,37 +88,34 @@ export function expanded(rect: Rect, furnitureHeight: number): Rect[] {
     gap =
       furnitureHeight >= rect.door.height ? 0 : Math.min(span, rect.door.width);
   if (gap <= 0) return [rect];
-  const rem = (span - gap) / 2;
-  if (rem <= 0) return [];
-  return vertical
-    ? [
-        {
+  const offset = rect.door.offset ?? 0;
+  const wallStart = (vertical ? rect.y : rect.x) - span / 2;
+  const openingStart = (vertical ? rect.y : rect.x) + offset - gap / 2;
+  const openingEnd = openingStart + gap;
+  const wallEnd = wallStart + span;
+  const before = openingStart - wallStart;
+  const after = wallEnd - openingEnd;
+  const jamb = (side: "before" | "after", amount: number): Rect | null => {
+    if (amount <= 0) return null;
+    const center =
+      side === "before" ? wallStart + amount / 2 : openingEnd + amount / 2;
+    return vertical
+      ? {
           ...rect,
-          id: rect.id + ":A",
-          height: rem,
-          y: rect.y - gap / 2 - rem / 2,
-        },
-        {
+          id: rect.id + (side === "before" ? ":A" : ":B"),
+          height: amount,
+          y: center,
+        }
+      : {
           ...rect,
-          id: rect.id + ":B",
-          height: rem,
-          y: rect.y + gap / 2 + rem / 2,
-        },
-      ]
-    : [
-        {
-          ...rect,
-          id: rect.id + ":A",
-          width: rem,
-          x: rect.x - gap / 2 - rem / 2,
-        },
-        {
-          ...rect,
-          id: rect.id + ":B",
-          width: rem,
-          x: rect.x + gap / 2 + rem / 2,
-        },
-      ];
+          id: rect.id + (side === "before" ? ":A" : ":B"),
+          width: amount,
+          x: center,
+        };
+  };
+  return [jamb("before", before), jamb("after", after)].filter(
+    (part): part is Rect => part !== null,
+  );
 }
 export function clearance(p: Pose, project: Project) {
   const body = corners(p, project.furniture.length, project.furniture.width);

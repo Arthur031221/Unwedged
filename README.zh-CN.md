@@ -10,7 +10,7 @@
 
 这是一份本地使用的现场测量表，用于测量单层布局，并以 2D 检查刚性矩形物件。
 
-**已独立检查 3,204 个路线姿态。** 检查方式如下。运行两个成功的预设案例，然后用 Shapely 对返回的每个线段采样 800 个间隔。[复现这项检查](CONTRIBUTING.md)。采样用于测试实现，验证器则检查绘制的 2D 模型中的连续运动。
+**独立采样检查了 6,408 个路线姿态。** 检查运行两个成功预设和四个回归用例，然后使用 Shapely 对每条返回路线的每个线段采样 800 个间隔。六条路线涵盖两种门洞方向。[复现检查](CONTRIBUTING.md)。采样结果为实现提供检查证据。应用验证器另行检查绘制的 2D 模型中的连续运动。
 
 | 之前                             | 之后                                             |
 | -------------------------------- | ------------------------------------------------ |
@@ -18,6 +18,10 @@
 | 不确定能否转弯通过               | 可供查看的已保存测量、路线播放和标注尺寸的路线图 |
 
 ![家具路线绕过墙面的真实浏览器录屏](assets/demo.gif)
+
+**试用步骤：** 选择 Corner landing，将家具宽度从 74 改为 75，然后使用 Undo 和 Redo。测量值变化时路线会清除。搜索路线后播放结果。
+
+Undo 和 Redo 会恢复成组的测量编辑。测量值会自动保存在本地，并可在下次访问时恢复。自动保存不包含路线。如果浏览器存储不可用，请使用 Save project 保存副本。键盘用户可以编辑输入框。在移动设备上，Measurements 按钮会打开障碍物编辑面板。门洞可以沿墙移动位置。带偏移门洞的文件使用 schema version 2，旧版客户端会拒绝此类文件。居中的 version 1 文件仍可打开。
 
 Unwedged 检查在同一楼层移动的刚性矩形物件。它不模拟 3D、楼梯、倾斜、搬运者或物件变形。有限搜索可能会漏掉路线，也永远不会证明物件无法通过。
 
@@ -28,7 +32,7 @@ Unwedged 检查在同一楼层移动的刚性矩形物件。它不模拟 3D、�
 安装 Node.js 22.12 或更新版本。以下命令会下载一次应用，然后在这台电脑的 `127.0.0.1` 上提供服务： 也需要安装 Git。
 
 ```sh
-npx github:Arthur031221/Unwedged
+npx github:Arthur031221/Unwedged#v1.1.0
 ```
 
 浏览器应用内置字体和求解器工作线程。首次访问后，请等待"离线就绪"指示出现，再依赖离线使用应用和路线搜索。项目文件保存在浏览器或下载文件夹中。应用运行期间不会调用 API。
@@ -59,19 +63,19 @@ npx github:Arthur031221/Unwedged
 
 <details><summary>macOS</summary>
 
-安装 Node.js 22.12 或更新版本，打开 Terminal 并运行 `npx github:Arthur031221/Unwedged`。打开显示的回环地址。按 Ctrl+C 停止服务器。 也需要安装 Git。
+安装 Node.js 22.12 或更新版本，打开 Terminal 并运行 `npx github:Arthur031221/Unwedged#v1.1.0`。打开显示的回环地址。按 Ctrl+C 停止服务器。 也需要安装 Git。
 
 </details>
 
 <details><summary>Linux</summary>
 
-安装 Node.js 22.12 或更新版本，打开终端并运行 `npx github:Arthur031221/Unwedged`。打开显示的回环地址。按 Ctrl+C 停止服务器。 也需要安装 Git。
+安装 Node.js 22.12 或更新版本，打开终端并运行 `npx github:Arthur031221/Unwedged#v1.1.0`。打开显示的回环地址。按 Ctrl+C 停止服务器。 也需要安装 Git。
 
 </details>
 
 <details><summary>Windows</summary>
 
-安装 Node.js 22.12 或更新版本，打开 PowerShell 并运行 `npx github:Arthur031221/Unwedged`。打开显示的回环地址。按 Ctrl+C 停止服务器。 也需要安装 Git。
+安装 Node.js 22.12 或更新版本，打开 PowerShell 并运行 `npx github:Arthur031221/Unwedged#v1.1.0`。打开显示的回环地址。按 Ctrl+C 停止服务器。 也需要安装 Git。
 
 </details>
 

@@ -1,8 +1,8 @@
 import { chromium } from "@playwright/test";
 import { spawn, execFileSync } from "node:child_process";
-import { mkdtemp, readdir, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import net from "node:net";
 
@@ -30,6 +30,29 @@ try {
     cwd: isolated,
     stdio: "inherit",
   });
+  const packageRoot = join(isolated, "node_modules", "unwedged");
+  const readmes = (await readdir(packageRoot)).filter((name) =>
+    /^README(?:\.[A-Za-z-]+)?\.md$/.test(name),
+  );
+  for (const name of readmes) {
+    const markdown = await readFile(join(packageRoot, name), "utf8");
+    const links = [
+      ...markdown.matchAll(/\]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/g),
+      ...markdown.matchAll(/\b(?:src|href)=["']([^"']+)["']/g),
+    ];
+    for (const match of links) {
+      const target = match[1];
+      if (/^(?:https?:|mailto:|#)/.test(target)) continue;
+      try {
+        await access(
+          resolve(packageRoot, decodeURIComponent(target.split("#")[0])),
+        );
+      } catch {
+        throw new Error(`Missing packaged link in ${name}: ${target}`);
+      }
+    }
+  }
+  console.log(`Packaged README links checked in ${readmes.length} languages`);
   const executable = join(isolated, "node_modules", ".bin", "unwedged");
   execFileSync(executable, ["--help"], { cwd: isolated, stdio: "inherit" });
   const portProbe = net.createServer();
