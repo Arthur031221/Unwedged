@@ -1,0 +1,132 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        width: 1200px;
+        height: 675px;
+        background: #eef4f8;
+        color: #192c39;
+        font-family: Arial, sans-serif;
+      }
+      .frame {
+        height: 100%;
+        padding: 54px 64px;
+        display: flex;
+        flex-direction: column;
+      }
+      .head {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .mark {
+        width: 42px;
+        height: 42px;
+      }
+      .name {
+        font-weight: 700;
+        font-size: 21px;
+        letter-spacing: -0.4px;
+      }
+      .tag {
+        font-size: 13px;
+        color: #596c7b;
+        margin-top: 5px;
+      }
+      .main {
+        display: grid;
+        grid-template-columns: 1fr 440px;
+        gap: 55px;
+        align-items: center;
+        flex: 1;
+      }
+      .over {
+        font-size: 12px;
+        letter-spacing: 2px;
+        color: #596c7b;
+      }
+      .title {
+        font-size: 66px;
+        line-height: 1.02;
+        letter-spacing: -3px;
+        font-weight: 500;
+        margin: 20px 0;
+      }
+      .desc {
+        font-size: 19px;
+        line-height: 1.5;
+        color: #596c7b;
+        max-width: 560px;
+      }
+      .pill {
+        margin-top: 30px;
+        border-left: 3px solid #007f72;
+        padding: 10px 14px;
+        font: 13px monospace;
+        color: #192c39;
+      }
+      .plan {
+        height: 380px;
+        background: white;
+        border: 1px solid #d8e2e9;
+        padding: 5px;
+        box-shadow: 0 15px 40px #1c354915;
+        overflow: hidden;
+      }
+      .plan img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
+      .footer {
+        border-top: 1px solid #d8e2e9;
+        padding-top: 15px;
+        display: flex;
+        justify-content: space-between;
+        color: #596c7b;
+        font: 12px monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <header class="head">
+        <img class="mark" src="../public/unwedged-mark.svg" alt="" />
+        <div>
+          <div class="name">Unwedged</div>
+          <div class="tag">A furniture delivery measurement bench</div>
+        </div>
+      </header>
+      <main class="main">
+        <div>
+          <div class="over">MEASURED INTERIOR / RIGID CARRY CHECK</div>
+          <h1 class="title">Know the route<br />before delivery.</h1>
+          <div class="desc">
+            Map a measured floorplan, set the fixed carry height and inspect a
+            route with a conservative continuous clearance certificate.
+          </div>
+          <div class="pill">
+            10 cm / 10° search lattice · locally verified route
+          </div>
+        </div>
+        <div class="plan">
+          <img
+            src="social-card-capture.png"
+            alt="The Unwedged app showing a certified furniture route around a wall"
+          />
+        </div>
+      </main>
+      <footer class="footer">
+        <span>Measure → place → verify → replay</span><span>UNWEDGED / 01</span>
+      </footer>
+    </div>
+  </body>
+</html>

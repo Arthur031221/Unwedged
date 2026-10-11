@@ -1,0 +1,6 @@
+node_modules
+dist
+.venv
+coverage
+test-results
+playwright-report

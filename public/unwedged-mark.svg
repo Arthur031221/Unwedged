@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <title>Unwedged mark</title>
+  <rect x="4" y="4" width="40" height="40" fill="#eef4f8" stroke="#3157a0" stroke-width="2"/>
+  <path d="M14 34V14h7v13h7" fill="none" stroke="#50697c" stroke-width="5" stroke-linecap="square"/>
+  <path d="M20 34 34 20" fill="none" stroke="#007f72" stroke-width="3" stroke-linecap="round"/>
+  <path d="m29 20 5 0 0 5" fill="none" stroke="#007f72" stroke-width="2"/>
+</svg>
