@@ -3,10 +3,15 @@ import { presets } from "./core/presets";
 import { exportJson, routeSvg } from "./core/serialize";
 import { LIMITS, type Project, type Route } from "./core/schema";
 import { messages, localeNames, type Locale } from "./locales";
-import { createObstacle, editRect } from "./core/editor";
+import { createEmptyProject, createObstacle, editRect } from "./core/editor";
 import { shortAngle } from "./core/geometry";
 import { formatClearance } from "./core/units";
-import { Field, RectEditor } from "./ui/Fields";
+import {
+  Field,
+  NumericDraftProvider,
+  RectEditor,
+  useNumericDrafts,
+} from "./ui/Fields";
 import { Floorplan } from "./ui/Floorplan";
 import { useRoutePlayback } from "./hooks/useRoutePlayback";
 import { useWorkerTasks } from "./hooks/useWorkerTasks";
@@ -30,6 +35,14 @@ const saveStored = (key: string, value: string) => {
 const validLocale = (value: string | null): value is Locale =>
   !!value && locales.includes(value as Locale);
 export default function App() {
+  return (
+    <NumericDraftProvider>
+      <AppBody />
+    </NumericDraftProvider>
+  );
+}
+
+function AppBody() {
   const initialDraft = useRef<{
     project: Project | null;
     unavailable: boolean;
@@ -49,6 +62,10 @@ export default function App() {
   const { project } = historyState;
   const [route, setRoute] = useState<Route | null>(null);
   const [status, setStatus] = useState<keyof typeof messages.en | "">("");
+  const [shareStatus, setShareStatus] = useState<"copied" | "shareReady" | "">(
+    "",
+  );
+  const shareGeneration = useRef(0);
   const [autosaveEnabled, setAutosaveEnabled] = useState(false);
   const [autosaveStatus, setAutosaveStatus] = useState<
     "saved" | "unavailable" | "restored" | ""
@@ -90,6 +107,8 @@ export default function App() {
   const routeRef = useRef<Route | null>(route);
   const file = useRef<HTMLInputElement>(null);
   const t = messages[locale];
+  const { invalidDraft, pendingDraft, draftVersion, resetDrafts } =
+    useNumericDrafts();
   useEffect(() => {
     const query = window.matchMedia("(max-width: 740px)");
     const update = () => {
@@ -174,15 +193,23 @@ export default function App() {
     importGeneration.current += 1;
     tasks.stop();
   };
+  const clearSharedLink = () => {
+    shareGeneration.current += 1;
+    setShareStatus("");
+    history.replaceState(null, "", location.pathname + location.search);
+  };
   const invalidate = () => {
-    importGeneration.current += 1;
+    clearSharedLink();
     stopWork();
     routeRef.current = null;
     setRoute(null);
     setPlaying(false);
     setProgress(0);
-    history.replaceState(null, "", location.pathname + location.search);
   };
+  useEffect(() => {
+    if (draftVersion > 0) invalidate();
+    // Draft edits invalidate displayed routes before their accepted value commits.
+  }, [draftVersion]);
   const change = (fn: (p: Project) => Project) => {
     invalidate();
     const next = fn(structuredClone(projectRef.current));
@@ -192,14 +219,40 @@ export default function App() {
     setAutosaveEnabled(true);
     setStatus("");
   };
+  const renameProject = (name: string) => {
+    clearSharedLink();
+    stopWork();
+    historyState.change({ ...projectRef.current, name });
+    setAutosaveEnabled(true);
+    if (!routeRef.current) setStatus("");
+  };
   const restoreHistory = (direction: "undo" | "redo") => {
-    if (direction === "undo" ? !historyState.canUndo : !historyState.canRedo)
+    resetDrafts();
+    if (
+      direction === "undo"
+        ? !historyState.canUndo && !pendingDraft && !invalidDraft
+        : !historyState.canRedo && !pendingDraft && !invalidDraft
+    )
       return;
-    invalidate();
+    const previous = projectRef.current;
+    clearSharedLink();
+    stopWork();
     if (direction === "undo") historyState.undo();
     else historyState.redo();
+    const next = projectRef.current;
+    // Name edits leave the geometry used to certify the route unchanged.
+    const geometryUnchanged =
+      previous.schemaVersion === next.schemaVersion &&
+      JSON.stringify({ ...previous, name: "" }) ===
+        JSON.stringify({ ...next, name: "" });
+    if (!geometryUnchanged) {
+      routeRef.current = null;
+      setRoute(null);
+      setPlaying(false);
+      setProgress(0);
+      setStatus("");
+    } else if (!routeRef.current) setStatus("");
     setAutosaveEnabled(true);
-    setStatus("");
   };
   useEffect(() => {
     if (!autosaveEnabled) return;
@@ -251,6 +304,7 @@ export default function App() {
     }
     tasks.importRaw(raw, {
       onImported: (bundle) => {
+        resetDrafts();
         historyState.reset(bundle.project);
         routeRef.current = bundle.route ?? null;
         setRoute(bundle.route ?? null);
@@ -311,6 +365,7 @@ export default function App() {
     saveStored("unwedged-unit", unit);
   }, [unit]);
   const startSearch = () => {
+    if (invalidDraft) return;
     stopWork();
     const runProject = projectRef.current;
     setRoute(null);
@@ -349,6 +404,7 @@ export default function App() {
     setStatus("cancelled");
   };
   const save = () => {
+    if (invalidDraft) return;
     const blob = new Blob(
       [exportJson(projectRef.current, routeRef.current ?? undefined)],
       {
@@ -358,6 +414,8 @@ export default function App() {
     download(blob, "unwedged-project.json");
   };
   const share = async () => {
+    if (invalidDraft) return;
+    const generation = ++shareGeneration.current;
     const b = btoa(
       unescape(
         encodeURIComponent(
@@ -366,10 +424,11 @@ export default function App() {
       ),
     );
     history.replaceState(null, "", `#${b}`);
+    setShareStatus("shareReady");
     try {
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(location.href);
-        setStatus("copied");
+        if (generation === shareGeneration.current) setShareStatus("copied");
       }
     } catch {
       // The address bar still contains the shared project when clipboard access is unavailable.
@@ -383,13 +442,14 @@ export default function App() {
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
   const exportSheet = () => {
+    if (invalidDraft) return;
     const currentRoute = routeRef.current;
     if (!currentRoute) return;
     download(
       new Blob(
         [
           routeSvg(projectRef.current, currentRoute, {
-            caption: t.sheetCaption,
+            caption: `${t.sheetCaption} · ${projectRef.current.name}`,
             dimensions: `${t.room} ${label(projectRef.current.floor.width)} × ${label(projectRef.current.floor.height)} · ${t.furnitureSize} ${label(projectRef.current.furniture.length)} × ${label(projectRef.current.furniture.width)} · ${t.carryHeight} ${label(projectRef.current.furniture.height)} · ${t.safetyMargin} ${label(projectRef.current.margin)} · ${t.clearance} ≥ ${formatClearance(currentRoute.clearance, unit)}`,
           }),
         ],
@@ -400,7 +460,8 @@ export default function App() {
   };
   const openFile = (f?: File) => {
     if (!f) return;
-    invalidate();
+    stopWork();
+    setPlaying(false);
     if (f.size > LIMITS.jsonBytes) {
       setStatus("invalidProject");
       return;
@@ -411,7 +472,12 @@ export default function App() {
       if (token !== importGeneration.current) return;
       tasks.importRaw(String(reader.result), {
         onImported: (bundle) => {
-          historyState.reset(bundle.project);
+          resetDrafts();
+          invalidate();
+          historyState.endGroup();
+          historyState.change(bundle.project);
+          setSelection("");
+          setMode("select");
           routeRef.current = bundle.route ?? null;
           setRoute(bundle.route ?? null);
           setStatus(bundle.route ? "verified" : "");
@@ -428,6 +494,9 @@ export default function App() {
     reader.readAsText(f);
   };
   const rects = project.rects;
+  const presetIndex = presets.findIndex(
+    (preset) => JSON.stringify(preset) === JSON.stringify(project),
+  );
   const W = project.floor.width;
   const H = project.floor.height;
   const f = (
@@ -446,18 +515,7 @@ export default function App() {
   ) =>
     change((p) => {
       const raw = v * (unit === "in" ? 2.54 : 1);
-      const clamp = (x: number, lo: number, hi: number) =>
-        Math.min(hi, Math.max(lo, Number.isFinite(x) ? x : lo));
-      let n = raw;
-      if (key === "length" || key === "width" || key === "height")
-        n = clamp(raw, 0.1, 2000);
-      if (key === "margin") n = clamp(raw, 0, 100);
-      if (key === "floorW")
-        n = clamp(raw, 1, Math.min(2000, 2_000_000 / p.floor.height));
-      if (key === "floorH")
-        n = clamp(raw, 1, Math.min(2000, 2_000_000 / p.floor.width));
-      if (key.startsWith("start") || key.startsWith("goal"))
-        n = clamp(raw, -2000, 2000);
+      const n = raw;
       if (key === "length" || key === "width" || key === "height")
         return {
           ...p,
@@ -498,7 +556,7 @@ export default function App() {
           <button
             className="history-btn"
             onClick={() => restoreHistory("undo")}
-            disabled={!historyState.canUndo}
+            disabled={!historyState.canUndo && !pendingDraft && !invalidDraft}
             aria-label={t.undo}
             title={t.undo}
           >
@@ -507,7 +565,7 @@ export default function App() {
           <button
             className="history-btn"
             onClick={() => restoreHistory("redo")}
-            disabled={!historyState.canRedo}
+            disabled={!historyState.canRedo && !pendingDraft && !invalidDraft}
             aria-label={t.redo}
             title={t.redo}
           >
@@ -535,11 +593,19 @@ export default function App() {
           >
             {dark ? "☼" : "◐"}
           </button>
-          <button className="share-btn" onClick={share}>
+          <button
+            className="share-btn"
+            aria-label={t.share}
+            onClick={share}
+            disabled={invalidDraft}
+          >
             ↗ <span>{t.share}</span>
           </button>
         </div>
       </header>
+      <div className="share-notice" role="status" aria-live="polite">
+        {shareStatus ? t[shareStatus] : ""}
+      </div>
       <main className="workspace">
         <aside
           ref={sidebar}
@@ -551,14 +617,14 @@ export default function App() {
           onFocusCapture={(event) => {
             if (
               event.target instanceof HTMLInputElement &&
-              event.target.type === "number"
+              ["number", "text"].includes(event.target.type)
             )
               historyState.beginGroup();
           }}
           onBlurCapture={(event) => {
             if (
               event.target instanceof HTMLInputElement &&
-              event.target.type === "number"
+              ["number", "text"].includes(event.target.type)
             )
               historyState.endGroup();
           }}
@@ -614,13 +680,19 @@ export default function App() {
               <span className="unit-pills">
                 <button
                   className={unit === "cm" ? "picked" : ""}
-                  onClick={() => setUnit("cm")}
+                  onClick={() => {
+                    resetDrafts();
+                    setUnit("cm");
+                  }}
                 >
                   cm
                 </button>
                 <button
                   className={unit === "in" ? "picked" : ""}
-                  onClick={() => setUnit("in")}
+                  onClick={() => {
+                    resetDrafts();
+                    setUnit("in");
+                  }}
                 >
                   in
                 </button>
@@ -629,14 +701,19 @@ export default function App() {
             <label className="select-label">
               {t.preset}
               <select
-                value={presets.findIndex((x) => x.name === project.name)}
+                value={presetIndex < 0 ? "custom" : presetIndex}
                 onChange={(e) => {
+                  if (e.target.value === "custom") return;
                   const selectedPreset = structuredClone(
                     presets[Number(e.target.value)]!,
                   );
+                  resetDrafts();
                   change(() => selectedPreset);
                 }}
               >
+                {presetIndex < 0 && (
+                  <option value="custom">{t.customLayout}</option>
+                )}
                 {presets.map((p, i) => (
                   <option value={i} key={p.name}>
                     {presetLabel(p.name)}
@@ -644,18 +721,46 @@ export default function App() {
                 ))}
               </select>
             </label>
+            <label className="select-label">
+              {t.planName}
+              <input
+                type="text"
+                maxLength={100}
+                value={project.name}
+                onChange={(event) => renameProject(event.target.value)}
+              />
+            </label>
+            <button
+              className="text-btn new-plan-btn"
+              onClick={() => {
+                resetDrafts();
+                change(() => createEmptyProject(t.untitledPlan));
+                setSelection("");
+                setMode("select");
+              }}
+            >
+              {t.newEmptyPlan}
+            </button>
             <div className="input-grid">
               <Field
                 label={t.width}
                 value={shown(project.floor.width)}
                 onChange={(v) => f("floorW", v)}
                 unit={unit}
+                min={unit === "in" ? 1 / 2.54 : 1}
+                max={shown(Math.min(LIMITS.dimension, LIMITS.area / H))}
+                rangeMessage={t.measurementRange}
+                emptyMessage={t.measurementRequired}
               />
               <Field
                 label={t.depth}
                 value={shown(project.floor.height)}
                 onChange={(v) => f("floorH", v)}
                 unit={unit}
+                min={unit === "in" ? 1 / 2.54 : 1}
+                max={shown(Math.min(LIMITS.dimension, LIMITS.area / W))}
+                rangeMessage={t.measurementRange}
+                emptyMessage={t.measurementRequired}
               />
             </div>
             <div className="tool-row" role="group" aria-label={t.canvasTools}>
@@ -709,24 +814,40 @@ export default function App() {
                 value={shown(project.furniture.length)}
                 onChange={(v) => f("length", v)}
                 unit={unit}
+                min={unit === "in" ? 0.1 / 2.54 : 0.1}
+                max={shown(LIMITS.dimension)}
+                rangeMessage={t.measurementRange}
+                emptyMessage={t.measurementRequired}
               />
               <Field
                 label={t.width}
                 value={shown(project.furniture.width)}
                 onChange={(v) => f("width", v)}
                 unit={unit}
+                min={unit === "in" ? 0.1 / 2.54 : 0.1}
+                max={shown(LIMITS.dimension)}
+                rangeMessage={t.measurementRange}
+                emptyMessage={t.measurementRequired}
               />
               <Field
                 label={t.height}
                 value={shown(project.furniture.height)}
                 onChange={(v) => f("height", v)}
                 unit={unit}
+                min={unit === "in" ? 0.1 / 2.54 : 0.1}
+                max={shown(LIMITS.dimension)}
+                rangeMessage={t.measurementRange}
+                emptyMessage={t.measurementRequired}
               />
               <Field
                 label={t.margin}
                 value={shown(project.margin)}
                 onChange={(v) => f("margin", v)}
                 unit={unit}
+                min={0}
+                max={shown(LIMITS.margin)}
+                rangeMessage={t.measurementRange}
+                emptyMessage={t.measurementRequired}
               />
             </div>
             <div className="input-grid pose-inputs">
@@ -737,12 +858,20 @@ export default function App() {
                   value={shown(project.start.x)}
                   onChange={(v) => f("startX", v)}
                   unit={unit}
+                  min={shown(-LIMITS.coordinate)}
+                  max={shown(LIMITS.coordinate)}
+                  rangeMessage={t.measurementRange}
+                  emptyMessage={t.measurementRequired}
                 />
                 <Field
                   label="Y"
                   value={shown(project.start.y)}
                   onChange={(v) => f("startY", v)}
                   unit={unit}
+                  min={shown(-LIMITS.coordinate)}
+                  max={shown(LIMITS.coordinate)}
+                  rangeMessage={t.measurementRange}
+                  emptyMessage={t.measurementRequired}
                 />
                 <Field
                   label={t.angle}
@@ -760,6 +889,10 @@ export default function App() {
                     }))
                   }
                   unit="°"
+                  min={(-1e6 * 180) / Math.PI}
+                  max={(1e6 * 180) / Math.PI}
+                  rangeMessage={t.measurementRange}
+                  emptyMessage={t.measurementRequired}
                 />
               </fieldset>
               <fieldset>
@@ -769,12 +902,20 @@ export default function App() {
                   value={shown(project.goal.x)}
                   onChange={(v) => f("goalX", v)}
                   unit={unit}
+                  min={shown(-LIMITS.coordinate)}
+                  max={shown(LIMITS.coordinate)}
+                  rangeMessage={t.measurementRange}
+                  emptyMessage={t.measurementRequired}
                 />
                 <Field
                   label="Y"
                   value={shown(project.goal.y)}
                   onChange={(v) => f("goalY", v)}
                   unit={unit}
+                  min={shown(-LIMITS.coordinate)}
+                  max={shown(LIMITS.coordinate)}
+                  rangeMessage={t.measurementRange}
+                  emptyMessage={t.measurementRequired}
                 />
                 <Field
                   label={t.angle}
@@ -792,6 +933,10 @@ export default function App() {
                     }))
                   }
                   unit="°"
+                  min={(-1e6 * 180) / Math.PI}
+                  max={(1e6 * 180) / Math.PI}
+                  rangeMessage={t.measurementRange}
+                  emptyMessage={t.measurementRequired}
                 />
               </fieldset>
             </div>
@@ -851,6 +996,7 @@ export default function App() {
             )}
             {selection && project.rects.find((r) => r.id === selection) && (
               <RectEditor
+                key={selection}
                 rect={project.rects.find((r) => r.id === selection)!}
                 unit={unit}
                 t={t}
@@ -881,6 +1027,7 @@ export default function App() {
             <button
               className="primary-btn"
               onClick={busy ? cancel : startSearch}
+              disabled={!busy && invalidDraft}
             >
               {busy ? t.cancel : t.find}
               <span>{busy ? "×" : "→"}</span>
@@ -902,6 +1049,8 @@ export default function App() {
                     <strong>{t.routeReady}</strong>
                   </div>
                   <p>{t.routeInfo}</p>
+                  {(status === "invalidProject" ||
+                    status === "workerError") && <p>{t[status]}</p>}
                   <div className="result-meta">
                     <div>
                       <small>{t.clearance}</small>
@@ -924,9 +1073,11 @@ export default function App() {
             <p className="scope-note">{t.scope}</p>
           </section>
           <footer className="side-footer">
-            <button onClick={save}>↓ {t.save}</button>
+            <button onClick={save} disabled={invalidDraft}>
+              ↓ {t.save}
+            </button>
             <button onClick={() => file.current?.click()}>↑ {t.open}</button>
-            <button onClick={exportSheet} disabled={!route}>
+            <button onClick={exportSheet} disabled={!route || invalidDraft}>
               ⇧ {t.export}
             </button>
             <input
@@ -934,7 +1085,11 @@ export default function App() {
               hidden
               type="file"
               accept="application/json,.json"
-              onChange={(e) => openFile(e.target.files?.[0])}
+              onChange={(e) => {
+                const selectedFile = e.target.files?.[0];
+                e.target.value = "";
+                openFile(selectedFile);
+              }}
             />
           </footer>
           {autosaveStatus && (
@@ -955,9 +1110,14 @@ export default function App() {
           <div className="canvas-head">
             <div>
               <span className="eyebrow">
-                {t.measuredInterior} / {t.unitCm.toUpperCase()}
+                {t.measuredInterior} /{" "}
+                {unit === "cm"
+                  ? t.unitCm.toUpperCase()
+                  : t.unitIn.toUpperCase()}
               </span>
-              <h2>{project.name}</h2>
+              <h2>
+                {presetIndex >= 0 ? presetLabel(project.name) : project.name}
+              </h2>
             </div>
             <div className="measure-chip" role="group" aria-label={t.floor}>
               ⌖{" "}
@@ -965,6 +1125,13 @@ export default function App() {
                 {label(W)} × {label(H)}
               </span>
             </div>
+            <button
+              className="quick-find"
+              onClick={busy ? cancel : startSearch}
+              disabled={!busy && invalidDraft}
+            >
+              {busy ? t.cancel : t.find}
+            </button>
             <button
               className="mobile-measure"
               aria-expanded={mobileOpen}
@@ -978,6 +1145,15 @@ export default function App() {
               ☷ {t.menu}
             </button>
           </div>
+          <p className="canvas-status" role="status">
+            {invalidDraft
+              ? t.correctMeasurements
+              : route && (status === "verified" || !status)
+                ? t.routeReady
+                : status
+                  ? t[status]
+                  : t.noRouteYet}
+          </p>
           <div className="canvas-wrap">
             <Floorplan
               svgRef={canvas}
@@ -1024,7 +1200,7 @@ export default function App() {
                     setPlaying(!playing);
                   }
                 }}
-                disabled={!route}
+                disabled={!route || invalidDraft}
                 aria-label={playing ? t.pause : t.play}
               >
                 {playing ? "Ⅱ" : "▶"}
@@ -1057,7 +1233,14 @@ export default function App() {
               <div>
                 <i style={{ left: `${progress * 100}%` }} />
               </div>
-              <span>{route ? `${route.poses.length} poses` : "—"}</span>
+              <span>
+                {route
+                  ? t.poseCount.replace(
+                      "{count}",
+                      route.poses.length.toLocaleString(locale),
+                    )
+                  : ""}
+              </span>
             </div>
           </div>
           <div className="canvas-foot">

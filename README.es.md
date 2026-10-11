@@ -8,20 +8,17 @@
 
 Encuentra una ruta con giros antes de que llegue el sofá.
 
-Una hoja de campo local para medir una planta de una sola altura y comprobar en 2D un objeto rectangular rígido.
-
-**6.408 poses de ruta muestreadas de forma independiente.** La comprobación ejecuta los dos ajustes preestablecidos que encuentran ruta y cuatro casos de regresión. Después muestrea cada ruta devuelta en 800 intervalos por segmento con Shapely. Las seis rutas incluyen ambas orientaciones de puerta. [Reproduce la comprobación](CONTRIBUTING.md). El muestreo aporta evidencia sobre la implementación. El verificador de la aplicación comprueba por separado el movimiento continuo en el modelo 2D dibujado.
-
-| Antes                                                                           | Después                                                                                    |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Medir el ancho de la puerta, la habitación, los obstáculos y la altura de carga | Una ruta de giro posible con cada segmento de movimiento certificado de forma conservadora |
-| No saber si se puede girar                                                      | Medidas guardadas, reproducción de la ruta y plano acotado para revisar                    |
+Una herramienta local para medir una planta de una sola altura y comprobar si un objeto rectangular rígido puede girar por ella.
 
 ![Grabación real del navegador de una ruta de muebles alrededor de una pared](assets/demo.gif)
 
-**Pruébalo:** elige Corner landing, cambia el ancho del mueble de 74 a 75 y usa Undo y Redo. La ruta se descarta cuando cambian las medidas. Busca una ruta y reproduce el resultado.
+**Pruébalo:** elige Rellano en esquina y pulsa Buscar ruta y Reproducir ruta con el ancho de ejemplo de 74 cm. Cambia Ancho a 75 cm y observa cómo desaparece la ruta. Usa Deshacer y Rehacer para revisar el cambio. Si la búsqueda limitada no encuentra una ruta con 75 cm, eso no demuestra que el paso sea imposible.
 
-Undo y Redo restauran grupos de cambios en las medidas. Las medidas se guardan automáticamente en el almacenamiento local y se pueden recuperar en la siguiente visita. Las rutas no se incluyen en ese guardado. Si el navegador no tiene almacenamiento disponible, usa Save project para conservar una copia. Quienes usan teclado pueden editar los campos. En móviles, el botón Measurements abre el panel para editar obstáculos. Las aberturas de puerta se pueden desplazar a lo largo de una pared. Los archivos con una abertura desplazada usan el esquema versión 2 y los clientes antiguos los rechazan. Los archivos de versión 1 con abertura centrada siguen siendo compatibles.
+Elige Nuevo plan vacío para empezar con una planta en blanco y escribe un nombre en Nombre del plan. Crearlo cuenta como un paso de Deshacer y las medidas se guardan localmente. Cambiar el nombre conserva la ruta verificada. Buscar ruta aparece junto al plan y pasa a ser Cancelar búsqueda mientras se busca. Compartir copia el enlace si el portapapeles está disponible. Si no, permanece en la barra de direcciones. La aplicación informa de cada resultado. Los encabezados muestran la unidad elegida. El pie de la hoja SVG incluye el nombre del plan.
+
+Una medida numérica se guarda completa al salir del campo o pulsar Intro. Los valores no válidos muestran un aviso visible y accesible, y bloquean la búsqueda, el uso compartido, el guardado y la exportación hasta corregirlos. Al editar las dimensiones de una pared se conservan el ancho y el desplazamiento medidos de la puerta. Se rechazan las dimensiones incompatibles. Abrir un proyecto correctamente se puede deshacer. Si se rechaza una importación, se conservan el plano actual y su ruta certificada.
+
+Deshacer y Rehacer restauran grupos de cambios en las medidas. Las medidas se guardan localmente y se pueden recuperar en la siguiente visita. Las rutas no se incluyen. Si el navegador no tiene almacenamiento, usa Guardar proyecto. Los campos admiten el teclado. En móviles, el botón Medidas abre el panel de obstáculos. Las aberturas se pueden desplazar a lo largo de la pared. Los archivos con desplazamiento usan el esquema versión 2, incompatible con clientes antiguos. Los archivos versión 1 con abertura centrada siguen siendo compatibles.
 
 Unwedged comprueba el movimiento de un rectángulo rígido en una sola planta. No modela 3D, escaleras, inclinación, porteadores ni deformación. Una búsqueda limitada puede pasar por alto una ruta. Nunca demuestra que el paso sea imposible.
 
@@ -32,7 +29,7 @@ El dibujo es el modelo. Mide lo que dibujas.
 Instala Node.js 22.12 o posterior. Este comando descarga la aplicación una vez y luego la sirve en este equipo en `127.0.0.1`: También necesitas instalar Git.
 
 ```sh
-npx github:Arthur031221/Unwedged#v1.1.0
+npx github:Arthur031221/Unwedged#v1.2.0
 ```
 
 La aplicación del navegador incluye sus fuentes y el worker del solucionador. Después de la primera visita, espera al indicador «Listo sin conexión» antes de confiar en el uso sin conexión de la aplicación y la búsqueda de rutas. Los archivos del proyecto permanecen en el navegador o en las descargas. La aplicación no realiza llamadas a API durante el uso.
@@ -63,19 +60,19 @@ Las medidas se guardan en centímetros. Puedes cambiar la visualización a pulga
 
 <details><summary>macOS</summary>
 
-Instala Node.js 22.12 o posterior, abre Terminal y ejecuta `npx github:Arthur031221/Unwedged#v1.1.0`. Abre la dirección de bucle local que se muestra. Detén el servidor con Ctrl+C. También necesitas instalar Git.
+Instala Node.js 22.12 o posterior, abre Terminal y ejecuta `npx github:Arthur031221/Unwedged#v1.2.0`. Abre la dirección de bucle local que se muestra. Detén el servidor con Ctrl+C. También necesitas instalar Git.
 
 </details>
 
 <details><summary>Linux</summary>
 
-Instala Node.js 22.12 o posterior, abre una terminal y ejecuta `npx github:Arthur031221/Unwedged#v1.1.0`. Abre la dirección de bucle local que se muestra. Detén el servidor con Ctrl+C. También necesitas instalar Git.
+Instala Node.js 22.12 o posterior, abre una terminal y ejecuta `npx github:Arthur031221/Unwedged#v1.2.0`. Abre la dirección de bucle local que se muestra. Detén el servidor con Ctrl+C. También necesitas instalar Git.
 
 </details>
 
 <details><summary>Windows</summary>
 
-Instala Node.js 22.12 o posterior, abre PowerShell y ejecuta `npx github:Arthur031221/Unwedged#v1.1.0`. Abre la dirección de bucle local que se muestra. Detén el servidor con Ctrl+C. También necesitas instalar Git.
+Instala Node.js 22.12 o posterior, abre PowerShell y ejecuta `npx github:Arthur031221/Unwedged#v1.2.0`. Abre la dirección de bucle local que se muestra. Detén el servidor con Ctrl+C. También necesitas instalar Git.
 
 </details>
 

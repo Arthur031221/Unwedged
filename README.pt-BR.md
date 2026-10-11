@@ -8,20 +8,17 @@
 
 Encontre uma rota com curvas antes que o sofá chegue.
 
-Uma ficha de campo local para medir uma planta de um único piso e verificar em 2D um objeto retangular rígido.
-
-**6.408 poses de rota amostradas de forma independente.** A verificação executa os dois predefinidos que encontram uma rota e quatro casos de regressão. Depois, amostra cada rota retornada em 800 intervalos por segmento com Shapely. As seis rotas incluem as duas orientações de porta. [Reproduza a verificação](CONTRIBUTING.md). A amostragem fornece evidências sobre a implementação. O verificador do app confere separadamente o movimento contínuo no modelo 2D desenhado.
-
-| Antes                                                                      | Depois                                                                                       |
-| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Medir a largura da porta, o cômodo, os obstáculos e a altura de transporte | Uma rota de curva candidata com cada segmento de movimento certificado de forma conservadora |
-| Dúvida sobre conseguir fazer a curva                                       | Medidas salvas, reprodução da rota e uma planta cotada para revisar                          |
+Uma ferramenta local para medir uma planta de um único piso e verificar se um objeto retangular rígido consegue fazer uma curva.
 
 ![Gravação real no navegador de uma rota de móvel contornando uma parede](assets/demo.gif)
 
-**Experimente:** escolha Corner landing, altere a largura do móvel de 74 para 75 e use Undo e Redo. A rota é descartada quando as medidas mudam. Busque uma rota e reproduza o resultado.
+**Experimente:** escolha Patamar em canto, toque em Encontrar rota e depois em Reproduzir rota com a largura de exemplo de 74 cm. Altere Largura para 75 cm e veja a rota desaparecer. Use Desfazer e Refazer para rever a edição. Se a busca limitada não encontrar uma rota com 75 cm, isso não prova que a passagem seja impossível.
 
-Undo e Redo restauram grupos de alterações nas medidas. As medidas são salvas automaticamente no armazenamento local e podem ser recuperadas na próxima visita. As rotas não são incluídas nesse salvamento. Se o navegador não tiver armazenamento disponível, use Save project para guardar uma cópia. Quem usa teclado pode editar os campos. Em dispositivos móveis, o botão Measurements abre o painel de edição de obstáculos. A abertura da porta pode ser deslocada ao longo da parede. Arquivos com abertura deslocada usam o esquema versão 2 e são rejeitados por clientes antigos. Arquivos versão 1 com abertura centralizada continuam aceitos.
+Escolha Novo plano vazio para começar com uma planta sem paredes nem obstáculos e digite um nome em Nome do plano. A criação conta como uma etapa de Desfazer, e as medidas são salvas localmente. Renomear mantém a rota verificada. Encontrar rota fica ao lado do plano e muda para Cancelar busca durante a busca. Compartilhar copia o link se a área de transferência estiver disponível. Caso contrário, ele permanece na barra de endereços e o app informa o resultado. Os títulos seguem a unidade escolhida e a legenda SVG inclui o nome do plano.
+
+Uma medida numérica é confirmada por inteiro ao sair do campo ou pressionar Enter. Valores inválidos mostram um aviso visível e acessível e bloqueiam busca, compartilhamento, salvamento e exportação até serem corrigidos. Editar as dimensões da parede preserva a largura e o deslocamento medidos da porta. Dimensões conflitantes são rejeitadas. Abrir um projeto com sucesso pode ser desfeito. Uma importação rejeitada preserva a planta atual e sua rota certificada.
+
+Desfazer e Refazer restauram grupos de alterações nas medidas. As medidas são salvas localmente e podem ser recuperadas na próxima visita. As rotas não são incluídas. Se o navegador não tiver armazenamento, use Salvar projeto. Os campos aceitam teclado. Em dispositivos móveis, Medidas abre o painel de obstáculos. A porta pode ser deslocada ao longo da parede. Arquivos com deslocamento usam o esquema versão 2, rejeitado por clientes antigos. Arquivos versão 1 com abertura centralizada continuam aceitos.
 
 Unwedged verifica o movimento de um retângulo rígido em um único piso. Não modela 3D, escadas, inclinação, carregadores ou deformação. Uma busca limitada pode não encontrar uma rota. Ela nunca prova que a passagem é impossível.
 
@@ -32,7 +29,7 @@ O desenho é o modelo. Meça o que você desenhar.
 Instale Node.js 22.12 ou mais recente. Este comando baixa o app uma vez e depois o disponibiliza neste computador em `127.0.0.1`: O Git também precisa estar instalado.
 
 ```sh
-npx github:Arthur031221/Unwedged#v1.1.0
+npx github:Arthur031221/Unwedged#v1.2.0
 ```
 
 O app no navegador inclui as fontes e o worker do solver. Após a primeira visita, aguarde o indicador "Pronto para uso offline" antes de confiar no uso offline do app e da busca de rotas. Os arquivos do projeto ficam no navegador ou na pasta de downloads. O app não faz chamadas de API durante o uso.
@@ -63,19 +60,19 @@ As medidas são salvas em centímetros. Você pode mudar a exibição para poleg
 
 <details><summary>macOS</summary>
 
-Instale Node.js 22.12 ou mais recente, abra o Terminal e execute `npx github:Arthur031221/Unwedged#v1.1.0`. Abra o endereço de loopback exibido. Encerre o servidor com Ctrl+C. O Git também precisa estar instalado.
+Instale Node.js 22.12 ou mais recente, abra o Terminal e execute `npx github:Arthur031221/Unwedged#v1.2.0`. Abra o endereço de loopback exibido. Encerre o servidor com Ctrl+C. O Git também precisa estar instalado.
 
 </details>
 
 <details><summary>Linux</summary>
 
-Instale Node.js 22.12 ou mais recente, abra um terminal e execute `npx github:Arthur031221/Unwedged#v1.1.0`. Abra o endereço de loopback exibido. Encerre o servidor com Ctrl+C. O Git também precisa estar instalado.
+Instale Node.js 22.12 ou mais recente, abra um terminal e execute `npx github:Arthur031221/Unwedged#v1.2.0`. Abra o endereço de loopback exibido. Encerre o servidor com Ctrl+C. O Git também precisa estar instalado.
 
 </details>
 
 <details><summary>Windows</summary>
 
-Instale Node.js 22.12 ou mais recente, abra o PowerShell e execute `npx github:Arthur031221/Unwedged#v1.1.0`. Abra o endereço de loopback exibido. Encerre o servidor com Ctrl+C. O Git também precisa estar instalado.
+Instale Node.js 22.12 ou mais recente, abra o PowerShell e execute `npx github:Arthur031221/Unwedged#v1.2.0`. Abra o endereço de loopback exibido. Encerre o servidor com Ctrl+C. O Git também precisa estar instalado.
 
 </details>
 

@@ -1,9 +1,40 @@
 import { describe, expect, it } from "vitest";
-import { createObstacle, editRect } from "./editor";
+import { createEmptyProject, createObstacle, editRect } from "./editor";
 import { presets } from "./presets";
 import { validateProject } from "./schema";
+import { solve } from "./search";
 
 describe("editable structure round trips", () => {
+  it("creates independent validated empty projects with a verified route", () => {
+    const first = createEmptyProject("Untitled plan");
+    const second = createEmptyProject("Second plan");
+    expect(first).toEqual({
+      schemaVersion: 1,
+      name: "Untitled plan",
+      floor: { width: 500, height: 300 },
+      furniture: { length: 150, width: 70, height: 70 },
+      margin: 2,
+      start: { x: 100, y: 150, angle: 0 },
+      goal: { x: 400, y: 150, angle: 0 },
+      rects: [],
+    });
+    expect(() => validateProject(first)).not.toThrow();
+    first.floor.width = 450;
+    first.rects.push({
+      id: "test",
+      x: 0,
+      y: 0,
+      width: 1,
+      height: 1,
+      kind: "obstacle",
+    });
+    expect(second.floor.width).toBe(500);
+    expect(second.rects).toEqual([]);
+    const result = solve(second);
+    expect(result.status).toBe("found");
+    if (result.status === "found") expect(result.route.verified).toBe(true);
+  });
+
   it("keeps a doorway inside its resized wall", () => {
     const project = structuredClone(presets[0]!);
     const wall = project.rects.find((rect) => rect.door)!;
@@ -12,6 +43,37 @@ describe("editable structure round trips", () => {
     project.rects = [resized];
     expect(() => validateProject(project)).not.toThrow();
   });
+  it("preserves imported measurements when only moving a wall", () => {
+    const project = structuredClone(presets[0]!);
+    project.schemaVersion = 2;
+    const wall = project.rects.find((rect) => rect.door)!;
+    wall.width = 0.05;
+    wall.door = { width: 131.95, height: 190, offset: 0.01 };
+    expect(() => validateProject(project)).not.toThrow();
+    const moved = editRect(wall, { x: 281, y: 151 });
+    expect(moved).toEqual({ ...wall, x: 281, y: 151 });
+    project.rects = [moved];
+    expect(() => validateProject(project)).not.toThrow();
+  });
+  it.each([
+    ["opening height", { door: { width: 131.95, height: 200, offset: 0.01 } }],
+    ["opening offset", { door: { width: 131.95, height: 190, offset: 0.02 } }],
+    ["wall thickness", { width: 27 }],
+    ["wall length", { height: 132.01 }],
+  ])(
+    "preserves unrelated imported measurements when editing %s",
+    (_, patch) => {
+      const project = structuredClone(presets[0]!);
+      project.schemaVersion = 2;
+      const wall = project.rects.find((rect) => rect.door)!;
+      wall.door = { width: 131.95, height: 190, offset: 0.01 };
+      expect(() => validateProject(project)).not.toThrow();
+      const edited = editRect(wall, patch);
+      expect(edited).toEqual({ ...wall, ...patch });
+      project.rects = [edited];
+      expect(() => validateProject(project)).not.toThrow();
+    },
+  );
   it("clamps doorway offsets after changing wall and opening widths", () => {
     const wall = {
       id: "offset",

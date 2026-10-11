@@ -22,9 +22,9 @@ try {
   });
 
   const context = await browser.newContext({
-    viewport: { width: 1280, height: 800 },
+    viewport: { width: 1280, height: 1000 },
     deviceScaleFactor: 1,
-    recordVideo: { dir: temp, size: { width: 1280, height: 800 } },
+    recordVideo: { dir: temp, size: { width: 1280, height: 1000 } },
   });
   const page = await context.newPage();
   await page.goto("http://127.0.0.1:4176/", { waitUntil: "networkidle" });
@@ -34,38 +34,22 @@ try {
     .waitFor({ state: "visible" });
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(1600);
-  await page.getByRole("button", { name: /Find route/ }).click();
+  await page.getByRole("button", { name: "New empty plan" }).click();
+  const planName = page.getByLabel("Plan name");
+  await planName.fill("Entry plan");
+  await planName.press("Tab");
+  await page.waitForTimeout(1700);
+
+  await page
+    .getByLabel("Measured layout")
+    .selectOption({ label: "Corner landing" });
+  await page.waitForTimeout(900);
+  await page.locator(".quick-find").click();
   await page
     .locator("#route-panel")
     .getByText("Route ready")
     .waitFor({ timeout: 30000 });
   await page.waitForTimeout(900);
-
-  const width = page.locator("#furniture").getByLabel("Width");
-  await width.fill("75");
-  await page.waitForTimeout(700);
-  await page.getByRole("button", { name: "Undo" }).click();
-  await width.waitFor({ state: "visible" });
-  await page.waitForFunction(
-    () =>
-      document.querySelector('#furniture input[aria-label="Width"]')?.value ===
-      "74",
-  );
-  await page.waitForTimeout(650);
-  await page.getByRole("button", { name: "Redo" }).click();
-  await page.waitForFunction(
-    () =>
-      document.querySelector('#furniture input[aria-label="Width"]')?.value ===
-      "75",
-  );
-  await page.waitForTimeout(900);
-
-  await page.getByRole("button", { name: /Find route/ }).click();
-  await page
-    .locator("#route-panel")
-    .getByText("Route ready")
-    .waitFor({ timeout: 30000 });
-  await page.waitForTimeout(800);
   await page.getByRole("button", { name: "Play route" }).click();
   await page.waitForTimeout(4200);
   await context.close();
@@ -87,7 +71,7 @@ try {
       "-t",
       "24",
       "-filter_complex",
-      "fps=12,scale=960:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer",
+      "fps=10,scale=960:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4",
       output,
     ],
     { stdio: "inherit" },
