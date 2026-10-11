@@ -1,11 +1,74 @@
 import { describe, it, expect } from "vitest";
 import { presets } from "./presets";
 import { clearance, expanded, shortAngle } from "./geometry";
+import { checkEndpoint } from "./endpoints";
 import { certifyPath, certifySegment } from "./verify";
 import { solve } from "./search";
 import { exportJson, importJson, routeSvg } from "./serialize";
 import { localeParity, messages } from "../locales";
 describe("geometry and certificate", () => {
+  it("classifies endpoint clearance against the solver's strict margin", () => {
+    const p = structuredClone(presets[0]!);
+    p.rects = [];
+    p.furniture = { length: 40, width: 20, height: 70 };
+    p.floor = { width: 500, height: 400 };
+    p.margin = 10;
+    expect(checkEndpoint({ x: 100, y: 100, angle: 0 }, p).issue).toBe(null);
+    expect(checkEndpoint({ x: 15, y: 100, angle: 0 }, p).issue).toBe(
+      "collision",
+    );
+    expect(checkEndpoint({ x: 25, y: 100, angle: 0 }, p).issue).toBe("margin");
+    expect(checkEndpoint({ x: 30, y: 100, angle: 0 }, p).issue).toBe("margin");
+  });
+  it("reports overlap with a fixed obstacle as a physical collision", () => {
+    const p = structuredClone(presets[0]!);
+    p.rects = [
+      {
+        id: "cabinet",
+        x: 100,
+        y: 100,
+        width: 30,
+        height: 30,
+        kind: "obstacle",
+      },
+    ];
+    expect(checkEndpoint({ x: 100, y: 100, angle: 0 }, p).issue).toBe(
+      "collision",
+    );
+  });
+  it("uses the rotated destination footprint and doorway carry height and offset", () => {
+    const p = structuredClone(presets[0]!);
+    p.floor = { width: 500, height: 400 };
+    p.furniture = { length: 60, width: 20, height: 70 };
+    p.margin = 2;
+    p.rects = [
+      {
+        id: "door",
+        x: 250,
+        y: 200,
+        width: 20,
+        height: 200,
+        kind: "wall",
+        door: { width: 100, height: 190, offset: 40 },
+      },
+    ];
+    expect(checkEndpoint({ x: 250, y: 240, angle: 0 }, p).issue).toBe(null);
+    expect(checkEndpoint({ x: 250, y: 200, angle: 0 }, p).issue).toBe(
+      "collision",
+    );
+    p.furniture.height = 190;
+    expect(checkEndpoint({ x: 250, y: 240, angle: 0 }, p).issue).toBe(
+      "collision",
+    );
+    p.rects = [];
+    p.margin = 0;
+    expect(checkEndpoint({ x: 489, y: 200, angle: 0 }, p).issue).toBe(
+      "collision",
+    );
+    expect(checkEndpoint({ x: 489, y: 200, angle: Math.PI / 2 }, p).issue).toBe(
+      null,
+    );
+  });
   it("finds a straight certified route on the open layout", () => {
     const p = structuredClone(presets[0]!);
     p.rects = [];

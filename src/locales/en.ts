@@ -35,8 +35,14 @@ export default {
   export: "Export route sheet",
   noRoute:
     "No route found within this bounded search. Try finer search or edit the layout.",
-  startHit: "The furniture collides at the start pose.",
-  goalHit: "The furniture collides at the destination pose.",
+  startHit:
+    "The furniture at the start either collides or misses the required safety margin.",
+  goalHit:
+    "The furniture at the destination either collides or misses the required safety margin.",
+  endpointWarning: "{endpoint}: {issue}. Required safety margin {margin}.",
+  endpointCollision:
+    "furniture touches or crosses a wall, obstacle or floor edge",
+  endpointMargin: "clearance {clearance} is at or below the safety margin",
   timeout: "Search limit reached. This is not a proof that no route exists.",
   cancelled: "Search cancelled.",
   verified: "Route conservatively certified",
@@ -71,6 +77,10 @@ export default {
   emptyObstacles: "No fixed obstacles in this plan.",
   fineSearch: "Fine search",
   selectedObstacle: "Selected obstacle: drag to move",
+  coordinateGuidance:
+    "X/Y values locate centers. The origin is the lower left corner. X increases right and Y increases up. Positive angles rotate counterclockwise.",
+  obstacleCoordinateGuidance:
+    "Obstacle X/Y values locate its center from the lower left corner. X increases right and Y increases up.",
   doorway: "Doorway",
   openingWidth: "Opening width",
   openingHeight: "Opening height",
@@ -81,6 +91,7 @@ export default {
   presetBlocked: "Blocked corridor",
   fixedStructure: "Fixed structure",
   furnitureFootprint: "Furniture footprint",
+  destinationFootprint: "Destination footprint",
   certifiedRoute: "Certified route",
   measurementsIn: "Measurements in",
   storedCm: "stored in centimetres",

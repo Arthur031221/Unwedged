@@ -20,10 +20,13 @@ try {
   });
   const app = await browser.newPage({ viewport: { width: 1440, height: 920 } });
   await app.goto("http://127.0.0.1:4176/", { waitUntil: "networkidle" });
-  await app.getByRole("button", { name: /Find route/ }).click();
   await app
     .locator("#route-panel")
-    .getByText("Route ready")
+    .getByRole("button", { name: /Find route/ })
+    .click();
+  await app
+    .locator("#route-panel")
+    .locator(".result.success")
     .waitFor({ timeout: 20000 });
   await app
     .locator(".main-panel")

@@ -36,8 +36,12 @@ export default {
   export: "経路図を出力",
   noRoute:
     "この上限付き検索では経路が見つかりません。精密検索を試すか間取りを編集してください。",
-  startHit: "開始姿勢で家具が衝突します。",
-  goalHit: "到着姿勢で家具が衝突します。",
+  startHit: "開始姿勢で家具が衝突するか、必要な安全余裕を満たしていません。",
+  goalHit: "到着姿勢で家具が衝突するか、必要な安全余裕を満たしていません。",
+  endpointWarning: "{endpoint}：{issue}。必要な安全余裕 {margin}。",
+  endpointCollision:
+    "家具が壁、障害物または床の境界に接触しているか、越えています",
+  endpointMargin: "クリアランス {clearance} は安全余裕以下です",
   timeout: "検索上限に達しました。経路が存在しない証明ではありません。",
   cancelled: "検索をキャンセルしました。",
   verified: "経路を保守的に検証済み",
@@ -73,6 +77,10 @@ export default {
   emptyObstacles: "固定障害物はありません。",
   fineSearch: "精密検索",
   selectedObstacle: "選択した障害物 · ドラッグで移動",
+  coordinateGuidance:
+    "X/Y は中心位置を表します。原点は左下です。X は右向き、Y は上向きに増加します。正の角度は反時計回りです。",
+  obstacleCoordinateGuidance:
+    "障害物の X/Y は左下の原点からの中心位置です。X は右向き、Y は上向きに増加します。",
   doorway: "開口部",
   openingWidth: "開口幅",
   openingHeight: "開口高さ",
@@ -83,6 +91,7 @@ export default {
   presetBlocked: "閉塞した廊下",
   fixedStructure: "固定構造物",
   furnitureFootprint: "家具の占有範囲",
+  destinationFootprint: "目的地の家具範囲",
   certifiedRoute: "認証済み経路",
   measurementsIn: "単位",
   storedCm: "内部値はセンチメートル",

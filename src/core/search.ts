@@ -1,6 +1,7 @@
 import type { Pose, Project, Route } from "./schema";
 import { validateProject } from "./schema";
-import { clearance, shortAngle } from "./geometry";
+import { shortAngle } from "./geometry";
+import { checkEndpoint } from "./endpoints";
 import { certifySegment, certifyPath, CERTIFICATION_BUDGET } from "./verify";
 export type SearchOptions = {
   fine?: boolean;
@@ -93,10 +94,10 @@ export function solve(
   const stopped = () => !!o.cancelled?.() || performance.now() > deadline;
   const segment = (a: Pose, b: Pose) =>
     certifySegment(a, b, p, 18, CERTIFICATION_BUDGET, stopped);
-  const sc = clearance(start, p),
-    gc = clearance(goal, p);
-  if (sc <= p.margin) return { status: "start-collision", explored: 0 };
-  if (gc <= p.margin) return { status: "goal-collision", explored: 0 };
+  if (checkEndpoint(start, p).issue)
+    return { status: "start-collision", explored: 0 };
+  if (checkEndpoint(goal, p).issue)
+    return { status: "goal-collision", explored: 0 };
   const direct = segment(start, goal);
   if (stopped())
     return { status: o.cancelled?.() ? "cancelled" : "timeout", explored: 0 };

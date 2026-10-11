@@ -8,35 +8,40 @@
 
 Encuentra una ruta con giros antes de que llegue el sofá.
 
-Una herramienta local para medir una planta de una sola altura y comprobar si un objeto rectangular rígido puede girar por ella.
+Una herramienta local de medición para comprobar si un objeto rectangular rígido puede girar por una planta medida de una sola altura.
 
 ![Grabación real del navegador de una ruta de muebles alrededor de una pared](assets/demo.gif)
 
-**Pruébalo:** elige Rellano en esquina y pulsa Buscar ruta y Reproducir ruta con el ancho de ejemplo de 74 cm. Cambia Ancho a 75 cm y observa cómo desaparece la ruta. Usa Deshacer y Rehacer para revisar el cambio. Si la búsqueda limitada no encuentra una ruta con 75 cm, eso no demuestra que el paso sea imposible.
-
-Elige Nuevo plan vacío para empezar con una planta en blanco y escribe un nombre en Nombre del plan. Crearlo cuenta como un paso de Deshacer y las medidas se guardan localmente. Cambiar el nombre conserva la ruta verificada. Buscar ruta aparece junto al plan y pasa a ser Cancelar búsqueda mientras se busca. Compartir copia el enlace si el portapapeles está disponible. Si no, permanece en la barra de direcciones. La aplicación informa de cada resultado. Los encabezados muestran la unidad elegida. El pie de la hoja SVG incluye el nombre del plan.
-
-Una medida numérica se guarda completa al salir del campo o pulsar Intro. Los valores no válidos muestran un aviso visible y accesible, y bloquean la búsqueda, el uso compartido, el guardado y la exportación hasta corregirlos. Al editar las dimensiones de una pared se conservan el ancho y el desplazamiento medidos de la puerta. Se rechazan las dimensiones incompatibles. Abrir un proyecto correctamente se puede deshacer. Si se rechaza una importación, se conservan el plano actual y su ruta certificada.
-
-Deshacer y Rehacer restauran grupos de cambios en las medidas. Las medidas se guardan localmente y se pueden recuperar en la siguiente visita. Las rutas no se incluyen. Si el navegador no tiene almacenamiento, usa Guardar proyecto. Los campos admiten el teclado. En móviles, el botón Medidas abre el panel de obstáculos. Las aberturas se pueden desplazar a lo largo de la pared. Los archivos con desplazamiento usan el esquema versión 2, incompatible con clientes antiguos. Los archivos versión 1 con abertura centrada siguen siendo compatibles.
-
-Unwedged comprueba el movimiento de un rectángulo rígido en una sola planta. No modela 3D, escaleras, inclinación, porteadores ni deformación. Una búsqueda limitada puede pasar por alto una ruta. Nunca demuestra que el paso sea imposible.
-
-El dibujo es el modelo. Mide lo que dibujas.
+**Pruébalo:** abre la demo en vivo y elige Rellano en esquina. Busca y reproduce la ruta con 74 cm, y cambia después Ancho a 75 cm. Si la búsqueda limitada no encuentra ruta, eso no demuestra que el paso sea imposible.
 
 ## Inicio rápido
 
-Instala Node.js 22.12 o posterior. Este comando descarga la aplicación una vez y luego la sirve en este equipo en `127.0.0.1`: También necesitas instalar Git.
+Instala Node.js 22.12 o posterior y Git, y ejecuta la aplicación localmente:
 
 ```sh
-npx github:Arthur031221/Unwedged#v1.2.0
+npx github:Arthur031221/Unwedged#v1.3.0
 ```
 
-La aplicación del navegador incluye sus fuentes y el worker del solucionador. Después de la primera visita, espera al indicador «Listo sin conexión» antes de confiar en el uso sin conexión de la aplicación y la búsqueda de rutas. Los archivos del proyecto permanecen en el navegador o en las descargas. La aplicación no realiza llamadas a API durante el uso.
+El comando descarga la aplicación y la sirve en este equipo en `127.0.0.1`. Tras la primera visita, espera al indicador «Listo sin conexión» antes de confiar en el uso sin conexión. Las medidas quedan en el navegador o en los archivos que guardes.
+
+Unwedged modela un rectángulo rígido que se mueve en una planta. No modela 3D, escaleras, inclinación, porteadores ni deformación. La búsqueda es limitada, puede pasar por alto una ruta y no demuestra que el paso sea imposible.
+
+X e Y indican centros. El origen está abajo a la izquierda, X aumenta hacia la derecha e Y hacia arriba. Los ángulos positivos giran en sentido antihorario. Consulta el ejemplo en [Uso](docs/usage.md).
+
+El dibujo es el modelo. Mide lo que dibujas.
+
+## Primer uso
+
+1. Elige Apartment hallway, Corner landing o Blocked corridor e introduce las medidas de la habitación y los obstáculos.
+2. Introduce el largo y el ancho del mueble, la altura fija de carga y el margen de seguridad. Define las posiciones y los ángulos inicial y de destino.
+3. Busca una ruta y reproduce o recorre las poses devueltas. Los avisos señalan colisiones en los extremos o espacio libre inferior al margen requerido.
+4. Guarda las medidas y la ruta comprobada como JSON, comparte un enlace del proyecto o exporta un plano SVG acotado.
+
+[Uso](docs/usage.md) explica las coordenadas y la edición. [Precisión y límites](docs/accuracy.md) describe las comprobaciones geométricas y los límites de búsqueda.
 
 ## Ejemplo de cinco líneas
 
-Guarda esto como `room.json`, ábrelo en la aplicación y elige Find route. Las dimensiones están en centímetros y los ángulos en radianes.
+Guarda esto como `room.json`, ábrelo en la aplicación y elige Buscar ruta. Las dimensiones están en centímetros y los ángulos en radianes.
 
 <!-- prettier-ignore -->
 ```json
@@ -47,32 +52,31 @@ Guarda esto como `room.json`, ábrelo en la aplicación y elige Find route. Las 
 }}
 ```
 
-## Flujo de trabajo
+## Instalación por sistema
 
-1. Elige Apartment hallway, Corner landing o Blocked corridor e introduce las dimensiones medidas de la habitación y los obstáculos.
-2. Introduce el largo y el ancho del mueble, la altura fija de carga y el margen de seguridad. Define las posiciones y los ángulos inicial y de destino.
-3. Busca una ruta. El worker comprueba los espacios libres sin bloquear el editor. Reproduce o recorre las poses devueltas.
-4. Guarda las medidas y la ruta verificada de nuevo como JSON, compártelas en el fragmento de una URL o exporta un plano de ruta SVG acotado.
-
-Las medidas se guardan en centímetros. Puedes cambiar la visualización a pulgadas. Al editar o mover cualquier geometría, la ruta actual se descarta antes de la siguiente búsqueda.
-
-## Instalación según el sistema
+Instala Node.js 22.12 o posterior y Git, y ejecuta el comando en Terminal, una terminal de Linux o PowerShell. Abre la dirección que aparece y detén el servidor con Ctrl+C.
 
 <details><summary>macOS</summary>
 
-Instala Node.js 22.12 o posterior, abre Terminal y ejecuta `npx github:Arthur031221/Unwedged#v1.2.0`. Abre la dirección de bucle local que se muestra. Detén el servidor con Ctrl+C. También necesitas instalar Git.
+```sh
+npx github:Arthur031221/Unwedged#v1.3.0
+```
 
 </details>
 
 <details><summary>Linux</summary>
 
-Instala Node.js 22.12 o posterior, abre una terminal y ejecuta `npx github:Arthur031221/Unwedged#v1.2.0`. Abre la dirección de bucle local que se muestra. Detén el servidor con Ctrl+C. También necesitas instalar Git.
+```sh
+npx github:Arthur031221/Unwedged#v1.3.0
+```
 
 </details>
 
 <details><summary>Windows</summary>
 
-Instala Node.js 22.12 o posterior, abre PowerShell y ejecuta `npx github:Arthur031221/Unwedged#v1.2.0`. Abre la dirección de bucle local que se muestra. Detén el servidor con Ctrl+C. También necesitas instalar Git.
+```powershell
+npx github:Arthur031221/Unwedged#v1.3.0
+```
 
 </details>
 
@@ -83,10 +87,10 @@ Instala Node.js 22.12 o posterior, abre PowerShell y ejecuta `npx github:Arthur0
 - `src/core/search.ts` ejecuta una búsqueda A* determinista con límites finitos de estados y tiempo.
 - `src/worker.ts` ejecuta la búsqueda y la verificación de rutas importadas fuera del hilo de la interfaz.
 - `src/locales` contiene nueve traducciones de la interfaz.
-- `docs/accuracy.md` describe las comprobaciones geométricas y los límites del solucionador.
+- [docs/accuracy.md](docs/accuracy.md) describe las comprobaciones geométricas y los límites del solucionador.
 
 ## Desarrollo
 
-Desde una copia del repositorio, ejecuta `npm ci`, `npm run dev`, `npm test` y `npm run build`. `CONTRIBUTING.md` enumera las comprobaciones de navegador, modo sin conexión, paquetes y Shapely independiente. El repositorio incluye los archivos de fuentes y sus avisos OFL.
+Desde una copia del repositorio, ejecuta `npm ci`, `npm run dev`, `npm test` y `npm run build`. [CONTRIBUTING.md](CONTRIBUTING.md) enumera las comprobaciones de navegador, modo sin conexión, paquetes y Shapely independiente. Se incluyen las fuentes y sus avisos OFL.
 
 Assisted by Claude/Codex.

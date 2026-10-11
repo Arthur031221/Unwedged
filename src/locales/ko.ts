@@ -36,8 +36,14 @@ export default {
   export: "경로 도면 내보내기",
   noRoute:
     "제한된 검색 범위에서 경로를 찾지 못했습니다. 정밀 검색이나 배치 편집을 시도하세요.",
-  startHit: "시작 자세에서 가구가 충돌합니다.",
-  goalHit: "도착 지점에서 가구가 충돌합니다.",
+  startHit:
+    "시작 자세에서 가구가 충돌하거나 필요한 안전 여유를 충족하지 못합니다.",
+  goalHit:
+    "도착 자세에서 가구가 충돌하거나 필요한 안전 여유를 충족하지 못합니다.",
+  endpointWarning: "{endpoint}: {issue}. 필요한 안전 여유 {margin}.",
+  endpointCollision:
+    "가구가 벽, 장애물 또는 바닥 경계에 닿거나 경계를 넘습니다",
+  endpointMargin: "여유 거리 {clearance}가 안전 여유 이하입니다",
   timeout: "검색 한도에 도달했습니다. 경로가 없다는 증명은 아닙니다.",
   cancelled: "검색을 취소했습니다.",
   verified: "경로를 보수적으로 인증했습니다",
@@ -72,6 +78,10 @@ export default {
   emptyObstacles: "고정 장애물이 없습니다.",
   fineSearch: "정밀 검색",
   selectedObstacle: "선택한 장애물 · 끌어서 이동",
+  coordinateGuidance:
+    "X/Y 값은 중심 위치를 나타냅니다. 원점은 왼쪽 아래입니다. X는 오른쪽으로, Y는 위쪽으로 증가합니다. 양수 각도는 반시계 방향으로 회전합니다.",
+  obstacleCoordinateGuidance:
+    "장애물의 X/Y 값은 왼쪽 아래 원점에서의 중심 위치입니다. X는 오른쪽으로, Y는 위쪽으로 증가합니다.",
   doorway: "출입구",
   openingWidth: "개구부 너비",
   openingHeight: "개구부 높이",
@@ -82,6 +92,7 @@ export default {
   presetBlocked: "막힌 복도",
   fixedStructure: "고정 구조물",
   furnitureFootprint: "가구 점유 면적",
+  destinationFootprint: "도착 가구 점유 면적",
   certifiedRoute: "인증된 경로",
   measurementsIn: "측정 단위",
   storedCm: "내부 값은 센티미터로 저장",

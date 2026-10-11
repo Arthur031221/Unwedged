@@ -12,7 +12,7 @@ export function editRect(rect: Rect, patch: Partial<Rect>): Rect {
     next.width = clamp(next.width, 0.1, LIMITS.dimension);
   if (patch.height !== undefined)
     next.height = clamp(next.height, 0.1, LIMITS.dimension);
-  if (next.kind !== "wall") delete next.door;
+  if (patch.kind === "obstacle" && rect.kind !== "obstacle") delete next.door;
   if (next.door) {
     // Imported jambs may be narrower than the minimum used for new openings.
     const length = Math.max(next.width, next.height);

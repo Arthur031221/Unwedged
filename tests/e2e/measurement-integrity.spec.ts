@@ -167,6 +167,65 @@ test("moving an imported wall preserves a narrow jamb and its exact opening", as
     .toMatchObject({ x: 281, door: { width: 131.95 } });
 });
 
+test("editing an imported obstacle doorway preserves exact measurements", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const project = structuredClone(presets[0]!);
+  const obstacle = project.rects.find((rect) => rect.id === "pinch")!;
+  project.schemaVersion = 2;
+  obstacle.kind = "obstacle";
+  obstacle.door = { width: 92, height: 190, offset: 10 };
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "obstacle-doorway.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({ format: "unwedged", schemaVersion: 2, project }),
+    ),
+  });
+  await page.locator(".obstacle-row").filter({ hasText: "pinch" }).click();
+  const editor = page.locator(".door-editor");
+  await expect(editor.getByLabel("Opening width")).toHaveValue("92");
+  await expect(editor.getByLabel("Opening height")).toHaveValue("190");
+  await expect(editor.getByLabel("Opening offset")).toHaveValue("10");
+  await editor.getByLabel("X", { exact: true }).fill("281");
+  await editor.getByLabel("X", { exact: true }).press("Tab");
+  await editor.getByLabel("Width", { exact: true }).fill("30");
+  await editor.getByLabel("Width", { exact: true }).press("Tab");
+  const persisted = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("unwedged-draft")!).project.rects.find(
+      (rect: { id: string }) => rect.id === "pinch",
+    ),
+  );
+  expect(persisted).toMatchObject({
+    kind: "obstacle",
+    x: 281,
+    width: 30,
+    door: { width: 92, height: 190, offset: 10 },
+  });
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: /Save project/ }).click();
+  const download = await downloadPromise;
+  const savedPath = await download.path();
+  expect(savedPath).not.toBeNull();
+  await page
+    .getByRole("button", { name: "New empty plan", exact: true })
+    .click();
+  await page.locator('input[type="file"]').setInputFiles(savedPath!);
+  await page.locator(".obstacle-row").filter({ hasText: "pinch" }).click();
+  await expect(editor.getByLabel("X", { exact: true })).toHaveValue("281");
+  await expect(editor.getByLabel("Width", { exact: true })).toHaveValue("30");
+  await expect(editor.getByLabel("Opening width")).toHaveValue("92");
+  await expect(editor.getByLabel("Opening height")).toHaveValue("190");
+  await expect(editor.getByLabel("Opening offset")).toHaveValue("10");
+  await page.reload();
+  await page.locator(".obstacle-row").filter({ hasText: "pinch" }).click();
+  const reloadedEditor = page.locator(".door-editor");
+  await expect(reloadedEditor.getByLabel("Opening width")).toHaveValue("92");
+  await expect(reloadedEditor.getByLabel("Opening height")).toHaveValue("190");
+  await expect(reloadedEditor.getByLabel("Opening offset")).toHaveValue("10");
+});
+
 for (const [field, value] of [
   ["Opening height", "200"],
   ["Opening offset", "0.01"],
@@ -259,4 +318,22 @@ test("invalid drafts reset across units, history, presets, imports and new plans
   await expect(page.locator(".field-error")).toHaveCount(0);
   await page.locator(".quick-find").click();
   await expect(page.locator(".route-line")).toHaveAttribute("points", /\d/);
+});
+
+test("Undo discards an invalid draft and restores the previous committed measurement", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const width = page.locator("#furniture").getByLabel("Width", { exact: true });
+  await expect(width).toHaveValue("74");
+  await width.fill("75");
+  await width.press("Tab");
+  await expect(width).toHaveValue("75");
+  await width.fill("2500");
+  await width.press("Tab");
+  await expect(width).toHaveAttribute("aria-invalid", "true");
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(width).toHaveValue("74");
+  await expect(width).toHaveAttribute("aria-invalid", "false");
+  await expect(page.locator(".quick-find")).toBeEnabled();
 });
