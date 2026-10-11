@@ -21,6 +21,7 @@
   --plan: #fbfdfe;
   --wall-selected: #ad5d39;
   --warn: #ad5d39;
+  --warn-text: #98502f;
   --shadow: 0 12px 36px rgba(28, 53, 69, 0.08);
 }
 :root[data-theme="dark"] {
@@ -42,6 +43,7 @@
   --plan: #192e3b;
   --wall-selected: #d88763;
   --warn: #dc9572;
+  --warn-text: #dc9572;
   --shadow: 0 12px 36px rgba(0, 0, 0, 0.18);
 }
 * {
@@ -221,6 +223,10 @@ select:focus-visible {
   padding: 17px 0 16px;
   border-bottom: 1px solid var(--line);
 }
+.form-section:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
 .section-title {
   display: flex;
   align-items: center;
@@ -389,6 +395,17 @@ select:focus-visible {
 }
 .pose-inputs .field > div {
   height: 30px;
+}
+.coordinate-guidance,
+.obstacle-coordinate-guidance {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+.door-editor > .obstacle-coordinate-guidance {
+  grid-column: 1 / -1;
+  margin: -2px 0 0;
 }
 .text-btn {
   border: 0;
@@ -621,6 +638,19 @@ select:focus-visible {
   font-size: 12px;
   line-height: 1.5;
 }
+.endpoint-warnings {
+  width: min(100%, 900px);
+  margin: -7px auto 12px;
+  color: var(--warn-text);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.endpoint-warnings p {
+  margin: 2px 0;
+}
+.endpoint-warnings:empty {
+  margin: 0;
+}
 .measure-chip {
   margin-left: auto;
   background: var(--panel);
@@ -681,6 +711,27 @@ select:focus-visible {
   fill-opacity: 0.75;
   stroke: var(--primary);
   stroke-width: 2;
+}
+.furniture-shape.endpoint-warning {
+  fill: var(--warn);
+  fill-opacity: 0.22;
+  stroke: var(--warn);
+  stroke-width: 3;
+}
+.goal-footprint {
+  fill: none;
+  stroke: var(--route);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  pointer-events: none;
+}
+.goal-footprint.endpoint-warning {
+  stroke: var(--warn);
+  stroke-width: 3;
+}
+.pose-marker.endpoint-warning circle,
+.pose-marker.endpoint-warning rect {
+  fill: var(--warn);
 }
 .route-ghost {
   fill: var(--green);
@@ -842,6 +893,9 @@ select:focus-visible {
 .legend-furniture {
   background: var(--green);
   border: 1px solid var(--primary);
+}
+.legend-destination {
+  border: 1px dashed var(--route);
 }
 .legend-route {
   height: 2px !important;

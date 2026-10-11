@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { LIMITS, type Pose, type Project, type Route } from "../core/schema";
 import { editRect } from "../core/editor";
 import { expanded } from "../core/geometry";
+import type { EndpointCheck } from "../core/endpoints";
 import { messages, type Locale } from "../locales";
 
 type Mode = "select" | "wall" | "start" | "goal";
@@ -17,6 +18,8 @@ type Props = {
   mode: Mode;
   setMode: (value: Mode) => void;
   label: (cm: number) => string;
+  endpointChecks: { start: EndpointCheck; goal: EndpointCheck };
+  showEndpointWarnings: boolean;
   change: (fn: (project: Project) => Project) => void;
   beginDrag: () => void;
   endDrag: () => void;
@@ -34,6 +37,8 @@ export function Floorplan({
   mode,
   setMode,
   label,
+  endpointChecks,
+  showEndpointWarnings,
   change,
   beginDrag,
   endDrag,
@@ -285,7 +290,7 @@ export function Floorplan({
           project.furniture.length,
           project.furniture.width,
         )}
-        className="furniture-shape"
+        className={`furniture-shape${showEndpointWarnings && !route && endpointChecks.start.issue ? " endpoint-warning" : ""}`}
       />
       <line
         x1={X(pose.x)}
@@ -299,13 +304,25 @@ export function Floorplan({
         className="rotation-arc"
       />
       <circle cx={X(pose.x)} cy={Y(pose.y)} r="4" className="pivot" />
-      <g className="pose-marker">
+      <g
+        className={`pose-marker${showEndpointWarnings && endpointChecks.start.issue ? " endpoint-warning" : ""}`}
+      >
         <circle cx={X(project.start.x)} cy={Y(project.start.y)} r="8" />
         <text x={X(project.start.x)} y={Y(project.start.y) - 15}>
           {t.start}
         </text>
       </g>
-      <g className="pose-marker goal-marker">
+      <polygon
+        points={corners(
+          project.goal,
+          project.furniture.length,
+          project.furniture.width,
+        )}
+        className={`goal-footprint${showEndpointWarnings && endpointChecks.goal.issue ? " endpoint-warning" : ""}`}
+      />
+      <g
+        className={`pose-marker goal-marker${showEndpointWarnings && endpointChecks.goal.issue ? " endpoint-warning" : ""}`}
+      >
         <rect
           x={X(project.goal.x) - 6}
           y={Y(project.goal.y) - 6}

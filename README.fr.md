@@ -6,37 +6,42 @@
 
 [![Node.js 22.12+](https://img.shields.io/badge/Node.js-22.12%2B-3157a0?style=flat-square)](docs/install.md) [![MIT](https://img.shields.io/badge/license-MIT-048b78?style=flat-square)](LICENSE)
 
-Trouvez un itinéraire avec un virage avant l'arrivée du canapé.
+Trouvez un itinéraire avec virages avant l'arrivée du canapé.
 
-Un outil local pour mesurer un logement de plain-pied et vérifier si un objet rectangulaire rigide peut y tourner.
+Un outil de mesure local pour vérifier si un objet rectangulaire rigide peut tourner dans un plan mesuré sur un seul niveau.
 
-![Enregistrement réel dans le navigateur d'un trajet de meuble contournant un mur](assets/demo.gif)
+![Enregistrement réel du navigateur montrant un meuble contournant un mur](assets/demo.gif)
 
-**Essayez :** choisissez Palier en angle, puis Chercher un trajet et Lire le trajet avec la largeur d'exemple de 74 cm. Passez Largeur à 75 cm et constatez que le trajet disparaît. Utilisez Annuler et Rétablir pour revoir la modification. Si la recherche bornée ne trouve pas de trajet à 75 cm, cela ne prouve pas que le passage est impossible.
-
-Choisissez Nouveau plan vide pour commencer avec un plan sans murs ni obstacles et saisissez un nom dans Nom du plan. Sa création compte comme une étape Annuler, et les mesures sont enregistrées localement. Renommer le plan conserve le trajet vérifié. Chercher un trajet se trouve à côté du plan et devient Annuler la recherche pendant une recherche. Partager copie le lien si le presse-papiers est accessible. Sinon, il reste dans la barre d'adresse et l'application signale le résultat. Les titres suivent l'unité choisie et la légende SVG contient le nom du plan.
-
-Une mesure numérique est validée en entier quand vous quittez le champ ou appuyez sur Entrée. Les valeurs invalides affichent un retour visible et accessible et bloquent la recherche, le partage, l'enregistrement et l'export jusqu'à leur correction. Modifier les dimensions d'un mur conserve la largeur et le décalage mesurés de la porte. Les dimensions incompatibles sont refusées. L'ouverture réussie d'un projet peut être annulée. Un import refusé conserve le plan actuel et son trajet certifié.
-
-Annuler et Rétablir restaurent des groupes de modifications des mesures. Les mesures sont enregistrées localement et restaurées à la prochaine visite. Les trajets ne sont pas inclus. Si le navigateur ne dispose pas de stockage, utilisez Enregistrer le projet. Les champs sont utilisables au clavier. Sur mobile, Mesures ouvre le panneau des obstacles. Les portes peuvent être décalées le long du mur. Les fichiers avec décalage utilisent le schéma version 2, refusé par les anciens clients. Les fichiers version 1 avec porte centrée restent acceptés.
-
-Unwedged vérifie le déplacement d'un rectangle rigide sur un seul étage. Il ne modélise ni la 3D, ni les escaliers, ni l'inclinaison, ni les porteurs, ni la déformation. Une recherche bornée peut manquer un trajet. Elle ne prouve jamais qu'un passage est impossible.
-
-Le dessin est le modèle. Mesurez ce que vous y dessinez.
+**À essayer :** ouvrez la démo et choisissez Palier en angle. Cherchez puis lisez l'itinéraire avec 74 cm, puis réglez Largeur sur 75 cm. Une recherche limitée qui ne trouve pas d'itinéraire ne prouve pas que le passage est impossible.
 
 ## Démarrage rapide
 
-Installez Node.js 22.12 ou une version ultérieure. Cette commande télécharge l'application une seule fois, puis la sert sur cet ordinateur à l'adresse `127.0.0.1` : Git doit aussi être installé.
+Installez Node.js 22.12 ou une version ultérieure ainsi que Git, puis lancez l'application en local :
 
 ```sh
-npx github:Arthur031221/Unwedged#v1.2.0
+npx github:Arthur031221/Unwedged#v1.3.0
 ```
 
-L'application du navigateur intègre ses polices et son worker de résolution. Après la première visite, attendez l'indicateur « Prêt hors ligne » avant de compter sur le fonctionnement hors ligne de l'application et de la recherche de trajets. Les fichiers du projet restent dans le navigateur ou dans les téléchargements. L'application n'effectue aucun appel API pendant son utilisation.
+La commande télécharge l'application et la sert sur votre ordinateur à `127.0.0.1`. Après la première visite, attendez l'indicateur « Hors ligne prêt » avant de compter sur l'usage hors ligne. Les mesures restent dans le navigateur ou dans les fichiers enregistrés.
+
+Unwedged modélise un rectangle rigide qui se déplace sur un seul niveau. Il ne modélise pas la 3D, les escaliers, l'inclinaison, les porteurs ni la déformation. La recherche est limitée, peut manquer un itinéraire et ne prouve pas qu'un passage est impossible.
+
+X et Y indiquent les centres. L'origine se trouve en bas à gauche, X augmente vers la droite et Y vers le haut. Les angles positifs tournent dans le sens antihoraire. Voir l'exemple dans [Utilisation](docs/usage.md).
+
+Le dessin est le modèle. Mesurez ce que vous y placez.
+
+## Première utilisation
+
+1. Choisissez Apartment hallway, Corner landing ou Blocked corridor, puis saisissez les mesures de la pièce et des obstacles.
+2. Saisissez la longueur, la largeur, la hauteur de port fixe du meuble et la marge de sécurité. Définissez les positions et angles de départ et d'arrivée.
+3. Cherchez un itinéraire, puis lisez ou parcourez les poses obtenues. Les avertissements signalent une collision aux extrémités ou un dégagement inférieur à la marge requise.
+4. Enregistrez les mesures et l'itinéraire vérifié en JSON, partagez un lien du projet ou exportez un plan SVG coté.
+
+[Utilisation](docs/usage.md) explique les coordonnées et les modifications. [Précision et limites](docs/accuracy.md) décrit les vérifications géométriques et les limites de recherche.
 
 ## Exemple en cinq lignes
 
-Enregistrez ceci dans `room.json`, ouvrez le fichier dans l'application, puis choisissez Find route. Les dimensions sont en centimètres et les angles en radians.
+Enregistrez ceci sous `room.json`, ouvrez le fichier dans l'application et choisissez Chercher un itinéraire. Les dimensions sont en centimètres et les angles en radians.
 
 <!-- prettier-ignore -->
 ```json
@@ -47,32 +52,31 @@ Enregistrez ceci dans `room.json`, ouvrez le fichier dans l'application, puis ch
 }}
 ```
 
-## Déroulement
-
-1. Choisissez Apartment hallway, Corner landing ou Blocked corridor, puis saisissez les dimensions mesurées de la pièce et des obstacles.
-2. Saisissez la longueur et la largeur du meuble, sa hauteur de portage fixe et la marge de sécurité. Définissez les positions et angles de départ et d'arrivée.
-3. Recherchez un trajet. Le worker vérifie les dégagements sans bloquer l'éditeur. Relisez ou parcourez les poses obtenues.
-4. Enregistrez les mesures et le trajet revérifié en JSON, partagez-les dans le fragment d'une URL ou exportez un plan de trajet SVG coté.
-
-Les mesures sont enregistrées en centimètres. Vous pouvez afficher les pouces. Toute modification ou tout déplacement de géométrie efface le trajet actuel avant la recherche suivante.
-
 ## Installation selon le système
+
+Installez Node.js 22.12 ou une version ultérieure et Git, puis lancez la commande dans Terminal, un terminal Linux ou PowerShell. Ouvrez l'adresse affichée et arrêtez le serveur avec Ctrl+C.
 
 <details><summary>macOS</summary>
 
-Installez Node.js 22.12 ou une version ultérieure, ouvrez Terminal et lancez `npx github:Arthur031221/Unwedged#v1.2.0`. Ouvrez l'adresse de bouclage affichée. Arrêtez le serveur avec Ctrl+C. Git doit aussi être installé.
+```sh
+npx github:Arthur031221/Unwedged#v1.3.0
+```
 
 </details>
 
 <details><summary>Linux</summary>
 
-Installez Node.js 22.12 ou une version ultérieure, ouvrez un terminal et lancez `npx github:Arthur031221/Unwedged#v1.2.0`. Ouvrez l'adresse de bouclage affichée. Arrêtez le serveur avec Ctrl+C. Git doit aussi être installé.
+```sh
+npx github:Arthur031221/Unwedged#v1.3.0
+```
 
 </details>
 
 <details><summary>Windows</summary>
 
-Installez Node.js 22.12 ou une version ultérieure, ouvrez PowerShell et lancez `npx github:Arthur031221/Unwedged#v1.2.0`. Ouvrez l'adresse de bouclage affichée. Arrêtez le serveur avec Ctrl+C. Git doit aussi être installé.
+```powershell
+npx github:Arthur031221/Unwedged#v1.3.0
+```
 
 </details>
 
@@ -83,10 +87,10 @@ Installez Node.js 22.12 ou une version ultérieure, ouvrez PowerShell et lancez 
 - `src/core/search.ts` exécute une recherche A* déterministe avec des limites finies d'états et de durée.
 - `src/worker.ts` exécute la recherche et la vérification des trajets importés hors du fil de l'interface.
 - `src/locales` contient neuf traductions de l'interface.
-- `docs/accuracy.md` décrit les vérifications géométriques et les limites du solveur.
+- [docs/accuracy.md](docs/accuracy.md) décrit les vérifications géométriques et les limites du solveur.
 
 ## Développement
 
-Depuis une copie du dépôt, lancez `npm ci`, `npm run dev`, `npm test` et `npm run build`. `CONTRIBUTING.md` répertorie les vérifications du navigateur, du mode hors ligne, des paquets et de Shapely indépendant. Le dépôt inclut les fichiers de polices et leurs avis OFL.
+Depuis une copie du dépôt, lancez `npm ci`, `npm run dev`, `npm test` et `npm run build`. [CONTRIBUTING.md](CONTRIBUTING.md) détaille les vérifications navigateur, hors ligne, paquet et Shapely indépendant. Les fichiers de polices et leurs notices OFL sont inclus.
 
 Assisted by Claude/Codex.

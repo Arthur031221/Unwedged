@@ -35,8 +35,15 @@ export default {
   export: "Exportar planta da rota",
   noRoute:
     "Nenhuma rota encontrada nesta busca limitada. Tente a busca fina ou edite a planta.",
-  startHit: "O móvel colide na posição inicial.",
-  goalHit: "O móvel colide no destino.",
+  startHit:
+    "O móvel colide ou não atende à margem de segurança necessária no início.",
+  goalHit:
+    "O móvel colide ou não atende à margem de segurança necessária no destino.",
+  endpointWarning:
+    "{endpoint}: {issue}. Margem de segurança necessária {margin}.",
+  endpointCollision:
+    "o móvel toca ou ultrapassa uma parede, um obstáculo ou a borda da planta",
+  endpointMargin: "a folga de {clearance} não supera a margem de segurança",
   timeout: "Limite de busca atingido. Isso não prova que não exista uma rota.",
   cancelled: "Busca cancelada.",
   verified: "Rota certificada de forma conservadora",
@@ -71,6 +78,10 @@ export default {
   emptyObstacles: "Não há obstáculos fixos nesta planta.",
   fineSearch: "Busca detalhada",
   selectedObstacle: "Obstáculo selecionado · arraste para mover",
+  coordinateGuidance:
+    "X/Y indicam os centros. A origem fica no canto inferior esquerdo. X aumenta para a direita e Y para cima. Ângulos positivos giram no sentido contrário ao dos ponteiros do relógio.",
+  obstacleCoordinateGuidance:
+    "X/Y indicam o centro do obstáculo a partir do canto inferior esquerdo. X aumenta para a direita e Y para cima.",
   doorway: "Porta",
   openingWidth: "Largura da abertura",
   openingHeight: "Altura da abertura",
@@ -81,6 +92,7 @@ export default {
   presetBlocked: "Corredor bloqueado",
   fixedStructure: "Estrutura fixa",
   furnitureFootprint: "Área ocupada pelo móvel",
+  destinationFootprint: "Área do móvel no destino",
   certifiedRoute: "Rota certificada",
   measurementsIn: "Medidas em",
   storedCm: "armazenadas em centímetros",

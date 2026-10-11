@@ -36,8 +36,15 @@ export default {
   export: "Exporter le plan du trajet",
   noRoute:
     "Aucun trajet trouvé dans cette recherche bornée. Essayez la recherche fine ou modifiez le plan.",
-  startHit: "Le meuble heurte un obstacle au départ.",
-  goalHit: "Le meuble heurte un obstacle à l'arrivée.",
+  startHit:
+    "Le meuble heurte un obstacle ou ne respecte pas la marge de sécurité au départ.",
+  goalHit:
+    "Le meuble heurte un obstacle ou ne respecte pas la marge de sécurité à l'arrivée.",
+  endpointWarning: "{endpoint} : {issue}. Marge de sécurité requise {margin}.",
+  endpointCollision:
+    "le meuble touche ou dépasse un mur, un obstacle ou le bord du plan",
+  endpointMargin:
+    "le dégagement de {clearance} ne dépasse pas la marge de sécurité",
   timeout:
     "La limite de recherche est atteinte. Cela ne prouve pas qu'aucun trajet existe.",
   cancelled: "Recherche annulée.",
@@ -74,6 +81,10 @@ export default {
   emptyObstacles: "Aucun obstacle fixe dans ce plan.",
   fineSearch: "Recherche fine",
   selectedObstacle: "Obstacle sélectionné · glisser pour déplacer",
+  coordinateGuidance:
+    "X/Y indiquent les centres. L'origine est le coin inférieur gauche. X augmente vers la droite et Y vers le haut. Les angles positifs tournent dans le sens antihoraire.",
+  obstacleCoordinateGuidance:
+    "X/Y indiquent le centre de l'obstacle depuis le coin inférieur gauche. X augmente vers la droite et Y vers le haut.",
   doorway: "Porte",
   openingWidth: "Largeur de l'ouverture",
   openingHeight: "Hauteur de l'ouverture",
@@ -84,6 +95,7 @@ export default {
   presetBlocked: "Couloir bloqué",
   fixedStructure: "Structure fixe",
   furnitureFootprint: "Emprise du meuble",
+  destinationFootprint: "Emprise à destination",
   certifiedRoute: "Trajet certifié",
   measurementsIn: "Mesures en",
   storedCm: "enregistrées en centimètres",

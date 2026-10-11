@@ -43,6 +43,44 @@ describe("editable structure round trips", () => {
     project.rects = [resized];
     expect(() => validateProject(project)).not.toThrow();
   });
+  it("preserves imported obstacle doorways when moving or resizing", () => {
+    const obstacle = {
+      id: "obstacle-door",
+      x: 120,
+      y: 80,
+      width: 26,
+      height: 132,
+      kind: "obstacle" as const,
+      door: { width: 92, height: 190, offset: 10 },
+    };
+    const moved = editRect(obstacle, { x: 121, y: 81 });
+    expect(moved).toEqual({ ...obstacle, x: 121, y: 81 });
+    const resized = editRect(obstacle, { id: "obstacle-resized", height: 140 });
+    expect(resized).toEqual({
+      ...obstacle,
+      id: "obstacle-resized",
+      height: 140,
+    });
+    const project = structuredClone(presets[0]!);
+    project.schemaVersion = 2;
+    project.rects = [moved, resized];
+    expect(() => validateProject(project)).not.toThrow();
+  });
+
+  it("removes a doorway only when converting a wall to an obstacle", () => {
+    const wall = {
+      id: "conversion-door",
+      x: 0,
+      y: 0,
+      width: 26,
+      height: 132,
+      kind: "wall" as const,
+      door: { width: 92, height: 190, offset: 10 },
+    };
+    expect(editRect(wall, { x: 1 }).door).toEqual(wall.door);
+    expect(editRect(wall, { kind: "obstacle" }).door).toBeUndefined();
+  });
+
   it("preserves imported measurements when only moving a wall", () => {
     const project = structuredClone(presets[0]!);
     project.schemaVersion = 2;

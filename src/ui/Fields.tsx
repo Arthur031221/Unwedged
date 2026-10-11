@@ -301,6 +301,9 @@ export function RectEditor({
           <option value="wall">{t.wall}</option>
         </select>
       </label>
+      <p className="obstacle-coordinate-guidance">
+        {t.obstacleCoordinateGuidance}
+      </p>
       <Field
         label="X"
         value={shown(rect.x)}
@@ -343,7 +346,7 @@ export function RectEditor({
         validate={(n) => doorConflict({ height: conv(n) })}
         onChange={(n) => update({ height: conv(n) })}
       />
-      {rect.kind === "wall" && (
+      {(rect.kind === "wall" || rect.door) && (
         <>
           <label className="toggle door-toggle">
             <input

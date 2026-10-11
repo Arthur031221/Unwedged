@@ -35,8 +35,16 @@ export default {
   export: "Exportar plano de ruta",
   noRoute:
     "No se encontró una ruta en esta búsqueda limitada. Prueba una búsqueda fina o edita el plano.",
-  startHit: "El mueble colisiona en la posición inicial.",
-  goalHit: "El mueble colisiona en el destino.",
+  startHit:
+    "El mueble colisiona o no cumple el margen de seguridad en el inicio.",
+  goalHit:
+    "El mueble colisiona o no cumple el margen de seguridad en el destino.",
+  endpointWarning:
+    "{endpoint}: {issue}. Margen de seguridad requerido {margin}.",
+  endpointCollision:
+    "el mueble toca o cruza una pared, un obstáculo o el borde del plano",
+  endpointMargin:
+    "el espacio libre de {clearance} no supera el margen de seguridad",
   timeout:
     "Se alcanzó el límite de búsqueda. No demuestra que no exista una ruta.",
   cancelled: "Búsqueda cancelada.",
@@ -74,6 +82,10 @@ export default {
   emptyObstacles: "No hay obstáculos fijos en este plano.",
   fineSearch: "Búsqueda fina",
   selectedObstacle: "Obstáculo seleccionado · arrastra para mover",
+  coordinateGuidance:
+    "X/Y indican los centros. El origen está en la esquina inferior izquierda. X aumenta hacia la derecha e Y hacia arriba. Los ángulos positivos giran en sentido antihorario.",
+  obstacleCoordinateGuidance:
+    "X/Y indican el centro del obstáculo desde la esquina inferior izquierda. X aumenta hacia la derecha e Y hacia arriba.",
   doorway: "Puerta",
   openingWidth: "Ancho de abertura",
   openingHeight: "Alto de abertura",
@@ -84,6 +96,7 @@ export default {
   presetBlocked: "Pasillo bloqueado",
   fixedStructure: "Estructura fija",
   furnitureFootprint: "Huella del mueble",
+  destinationFootprint: "Huella en el destino",
   certifiedRoute: "Ruta certificada",
   measurementsIn: "Medidas en",
   storedCm: "guardadas en centímetros",

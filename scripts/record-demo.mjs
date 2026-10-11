@@ -40,14 +40,42 @@ try {
   await planName.press("Tab");
   await page.waitForTimeout(1700);
 
+  const destination = page
+    .locator("fieldset")
+    .filter({ has: page.locator("legend", { hasText: "Destination" }) });
+  const destinationX = destination.getByLabel("X");
+  await destinationX.waitFor({ state: "visible" });
+  if ((await destinationX.inputValue()) !== "400") {
+    throw new Error("New empty plan destination X was not 400");
+  }
+  await destinationX.fill("490");
+  await destinationX.press("Tab");
+  await page.locator(".endpoint-warnings").waitFor({ state: "visible" });
+  await page
+    .locator(".goal-footprint.endpoint-warning")
+    .waitFor({ state: "visible" });
+  await page.waitForTimeout(1500);
+  await destinationX.fill("400");
+  await destinationX.press("Tab");
+  await page.locator(".endpoint-warnings").waitFor({ state: "hidden" });
+  await page
+    .locator(".goal-footprint.endpoint-warning")
+    .waitFor({ state: "hidden" });
+
   await page
     .getByLabel("Measured layout")
     .selectOption({ label: "Corner landing" });
   await page.waitForTimeout(900);
-  await page.locator(".quick-find").click();
   await page
     .locator("#route-panel")
-    .getByText("Route ready")
+    .getByRole("button", { name: /Find route/ })
+    .click();
+  await page
+    .locator("#route-panel")
+    .locator(".result.success")
+    .getByText(
+      "Every shown segment passed the continuous clearance certificate.",
+    )
     .waitFor({ timeout: 30000 });
   await page.waitForTimeout(900);
   await page.getByRole("button", { name: "Play route" }).click();

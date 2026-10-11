@@ -1,0 +1,82 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 520 320"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">Center coordinates for a measured wall</title>
+  <desc id="desc">
+    The floor origin is at the lower left. A wall begins 100 centimetres from
+    the left edge, is 20 centimetres wide, and has center X 110 centimetres and
+    center Y 150 centimetres. This diagram is not to scale.
+  </desc>
+  <rect width="520" height="320" rx="12" fill="#f6f4ef" />
+  <path d="M72 40v220h400" fill="none" stroke="#42505b" stroke-width="3" />
+  <path
+    d="M72 260h400"
+    stroke="#42505b"
+    stroke-width="2"
+    marker-end="url(#arrow)"
+  />
+  <path
+    d="M72 260V40"
+    stroke="#42505b"
+    stroke-width="2"
+    marker-end="url(#arrow)"
+  />
+  <rect
+    x="252"
+    y="88"
+    width="40"
+    height="120"
+    rx="3"
+    fill="#d77851"
+    stroke="#7e3f2d"
+    stroke-width="2"
+  />
+  <path
+    d="M72 226h180m0-7v14m40-14v14m0-7h180"
+    fill="none"
+    stroke="#687782"
+    stroke-width="1.5"
+  />
+  <path d="M252 220v-10m40 10v-10" stroke="#687782" stroke-width="1.5" />
+  <circle cx="272" cy="148" r="5" fill="#173d55" />
+  <path
+    d="M272 148h110m-110 0v-82"
+    fill="none"
+    stroke="#173d55"
+    stroke-width="1.5"
+    stroke-dasharray="5 4"
+  />
+  <text x="72" y="288" font-family="sans-serif" font-size="15" fill="#25333c">
+    Origin (0, 0)
+  </text>
+  <text x="438" y="284" font-family="sans-serif" font-size="16" fill="#25333c">
+    X
+  </text>
+  <text x="58" y="48" font-family="sans-serif" font-size="16" fill="#25333c">
+    Y
+  </text>
+  <text x="190" y="248" font-family="sans-serif" font-size="14" fill="#25333c">
+    left edge X = 100 cm
+  </text>
+  <text x="236" y="76" font-family="sans-serif" font-size="14" fill="#25333c">
+    wall width = 20 cm
+  </text>
+  <text x="352" y="142" font-family="sans-serif" font-size="14" fill="#173d55">
+    center (110, 150) cm
+  </text>
+  <defs>
+    <marker
+      id="arrow"
+      markerWidth="8"
+      markerHeight="8"
+      refX="6"
+      refY="3"
+      orient="auto"
+    >
+      <path d="M0 0L6 3 0 6" fill="none" stroke="#42505b" stroke-width="1.5" />
+    </marker>
+  </defs>
+</svg>

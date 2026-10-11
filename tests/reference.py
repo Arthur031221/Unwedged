@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 
 from shapely import affinity
-from shapely.geometry import Polygon, box
+from shapely.geometry import box
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests/fixtures/reference-cases.json"

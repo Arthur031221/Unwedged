@@ -6,37 +6,42 @@
 
 [![Node.js 22.12+](https://img.shields.io/badge/Node.js-22.12%2B-3157a0?style=flat-square)](docs/install.md) [![MIT](https://img.shields.io/badge/license-MIT-048b78?style=flat-square)](LICENSE)
 
-Encontre uma rota com curvas antes que o sofá chegue.
+Encontre uma rota com curvas antes de o sofá chegar.
 
-Uma ferramenta local para medir uma planta de um único piso e verificar se um objeto retangular rígido consegue fazer uma curva.
+Uma ferramenta local de medição que verifica se um objeto retangular rígido consegue fazer curvas em uma planta medida de um único piso.
 
-![Gravação real no navegador de uma rota de móvel contornando uma parede](assets/demo.gif)
+![Gravação real do navegador de um móvel contornando uma parede](assets/demo.gif)
 
-**Experimente:** escolha Patamar em canto, toque em Encontrar rota e depois em Reproduzir rota com a largura de exemplo de 74 cm. Altere Largura para 75 cm e veja a rota desaparecer. Use Desfazer e Refazer para rever a edição. Se a busca limitada não encontrar uma rota com 75 cm, isso não prova que a passagem seja impossível.
-
-Escolha Novo plano vazio para começar com uma planta sem paredes nem obstáculos e digite um nome em Nome do plano. A criação conta como uma etapa de Desfazer, e as medidas são salvas localmente. Renomear mantém a rota verificada. Encontrar rota fica ao lado do plano e muda para Cancelar busca durante a busca. Compartilhar copia o link se a área de transferência estiver disponível. Caso contrário, ele permanece na barra de endereços e o app informa o resultado. Os títulos seguem a unidade escolhida e a legenda SVG inclui o nome do plano.
-
-Uma medida numérica é confirmada por inteiro ao sair do campo ou pressionar Enter. Valores inválidos mostram um aviso visível e acessível e bloqueiam busca, compartilhamento, salvamento e exportação até serem corrigidos. Editar as dimensões da parede preserva a largura e o deslocamento medidos da porta. Dimensões conflitantes são rejeitadas. Abrir um projeto com sucesso pode ser desfeito. Uma importação rejeitada preserva a planta atual e sua rota certificada.
-
-Desfazer e Refazer restauram grupos de alterações nas medidas. As medidas são salvas localmente e podem ser recuperadas na próxima visita. As rotas não são incluídas. Se o navegador não tiver armazenamento, use Salvar projeto. Os campos aceitam teclado. Em dispositivos móveis, Medidas abre o painel de obstáculos. A porta pode ser deslocada ao longo da parede. Arquivos com deslocamento usam o esquema versão 2, rejeitado por clientes antigos. Arquivos versão 1 com abertura centralizada continuam aceitos.
-
-Unwedged verifica o movimento de um retângulo rígido em um único piso. Não modela 3D, escadas, inclinação, carregadores ou deformação. Uma busca limitada pode não encontrar uma rota. Ela nunca prova que a passagem é impossível.
-
-O desenho é o modelo. Meça o que você desenhar.
+**Experimente:** abra a demonstração e escolha Corner landing. Encontre e reproduza a rota com 74 cm, depois altere a largura para 75 cm. Se a busca limitada não encontrar uma rota, isso não prova que a passagem seja impossível.
 
 ## Início rápido
 
-Instale Node.js 22.12 ou mais recente. Este comando baixa o app uma vez e depois o disponibiliza neste computador em `127.0.0.1`: O Git também precisa estar instalado.
+Instale Node.js 22.12 ou mais recente e Git, depois execute o app localmente:
 
 ```sh
-npx github:Arthur031221/Unwedged#v1.2.0
+npx github:Arthur031221/Unwedged#v1.3.0
 ```
 
-O app no navegador inclui as fontes e o worker do solver. Após a primeira visita, aguarde o indicador "Pronto para uso offline" antes de confiar no uso offline do app e da busca de rotas. Os arquivos do projeto ficam no navegador ou na pasta de downloads. O app não faz chamadas de API durante o uso.
+O comando baixa o app e o disponibiliza no computador em `127.0.0.1`. Após a primeira visita, aguarde o indicador "Pronto para uso offline" antes de depender do modo offline. As medidas ficam no navegador ou nos arquivos salvos.
+
+Unwedged modela um retângulo rígido que se move em um piso. Não modela 3D, escadas, inclinação, carregadores nem deformação. A busca é limitada, pode deixar de encontrar uma rota e não prova que a passagem seja impossível.
+
+X e Y indicam os centros. A origem fica no canto inferior esquerdo, X aumenta para a direita e Y para cima. Ângulos positivos giram no sentido anti-horário. Veja o exemplo em [Uso](docs/usage.md).
+
+O desenho é o modelo. Meça o que você desenhou.
+
+## Primeiro uso
+
+1. Escolha Apartment hallway, Corner landing ou Blocked corridor e informe as medidas da sala e dos obstáculos.
+2. Informe o comprimento e a largura do móvel, a altura fixa de transporte e a margem de segurança. Defina as posições e os ângulos de início e destino.
+3. Busque uma rota e reproduza ou percorra as poses encontradas. Os avisos indicam colisões nas extremidades ou folga abaixo da margem necessária.
+4. Salve as medidas e a rota verificada em JSON, compartilhe um link do projeto ou exporte uma planta SVG cotada.
+
+[Uso](docs/usage.md) explica coordenadas e edição. [Precisão e limites](docs/accuracy.md) descreve as verificações geométricas e os limites da busca.
 
 ## Exemplo de cinco linhas
 
-Salve isto como `room.json`, abra no app e escolha Find route. As dimensões estão em centímetros e os ângulos em radianos.
+Salve como `room.json`, abra no app e escolha Buscar rota. As dimensões estão em centímetros e os ângulos em radianos.
 
 <!-- prettier-ignore -->
 ```json
@@ -47,32 +52,31 @@ Salve isto como `room.json`, abra no app e escolha Find route. As dimensões est
 }}
 ```
 
-## Fluxo de trabalho
+## Instalação por sistema
 
-1. Escolha Apartment hallway, Corner landing ou Blocked corridor e informe as dimensões medidas do cômodo e dos obstáculos.
-2. Informe o comprimento e a largura do móvel, a altura fixa de transporte e a margem de segurança. Defina as posições e os ângulos inicial e de destino.
-3. Busque uma rota. O worker verifica as folgas sem travar o editor. Reproduza ou percorra as poses retornadas.
-4. Salve as medidas e a rota verificada novamente em JSON, compartilhe-as no fragmento de uma URL ou exporte uma planta de rota SVG cotada.
-
-As medidas são salvas em centímetros. Você pode mudar a exibição para polegadas. Editar ou mover qualquer geometria descarta a rota atual antes da próxima busca.
-
-## Instalação por sistema operacional
+Instale Node.js 22.12 ou mais recente e Git, depois execute o comando no Terminal, em um terminal Linux ou no PowerShell. Abra o endereço exibido e pare o servidor com Ctrl+C.
 
 <details><summary>macOS</summary>
 
-Instale Node.js 22.12 ou mais recente, abra o Terminal e execute `npx github:Arthur031221/Unwedged#v1.2.0`. Abra o endereço de loopback exibido. Encerre o servidor com Ctrl+C. O Git também precisa estar instalado.
+```sh
+npx github:Arthur031221/Unwedged#v1.3.0
+```
 
 </details>
 
 <details><summary>Linux</summary>
 
-Instale Node.js 22.12 ou mais recente, abra um terminal e execute `npx github:Arthur031221/Unwedged#v1.2.0`. Abra o endereço de loopback exibido. Encerre o servidor com Ctrl+C. O Git também precisa estar instalado.
+```sh
+npx github:Arthur031221/Unwedged#v1.3.0
+```
 
 </details>
 
 <details><summary>Windows</summary>
 
-Instale Node.js 22.12 ou mais recente, abra o PowerShell e execute `npx github:Arthur031221/Unwedged#v1.2.0`. Abra o endereço de loopback exibido. Encerre o servidor com Ctrl+C. O Git também precisa estar instalado.
+```powershell
+npx github:Arthur031221/Unwedged#v1.3.0
+```
 
 </details>
 
@@ -83,10 +87,10 @@ Instale Node.js 22.12 ou mais recente, abra o PowerShell e execute `npx github:A
 - `src/core/search.ts` executa uma busca A* determinística com limites finitos de estados e tempo.
 - `src/worker.ts` executa a busca e a verificação de rotas importadas fora da thread da interface.
 - `src/locales` contém nove traduções da interface.
-- `docs/accuracy.md` descreve as verificações geométricas e os limites do solver.
+- [docs/accuracy.md](docs/accuracy.md) descreve as verificações geométricas e os limites do solver.
 
 ## Desenvolvimento
 
-Em um checkout do repositório, execute `npm ci`, `npm run dev`, `npm test` e `npm run build`. `CONTRIBUTING.md` lista as verificações de navegador, uso offline, pacote e Shapely independente. O repositório inclui os arquivos de fontes e seus avisos OFL.
+No repositório, execute `npm ci`, `npm run dev`, `npm test` e `npm run build`. [CONTRIBUTING.md](CONTRIBUTING.md) lista as verificações de navegador, modo offline, pacote e Shapely independente. Os arquivos de fontes e seus avisos OFL estão incluídos.
 
 Assisted by Claude/Codex.

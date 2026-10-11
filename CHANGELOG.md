@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0
+
+- Warn immediately when start or destination clearance is at or below the required safety margin, distinguish contact or overlap as a collision, and draw the destination furniture footprint.
+- Preserve accepted imported doorway widths and offsets when obstacle dimensions are edited and when plans are reloaded.
+- Make section navigation track the current section on desktop and mobile, support keyboard focus, and respect reduced motion.
+- Clarify center based coordinates, the lower left origin, upward Y axis and counterclockwise positive angles.
+
 ## 1.2.0
 
 - Commit complete numeric measurements on blur or Enter, with accessible validation that blocks search, sharing, saving and export until corrected. Preserve measured doorway width and offset when wall dimensions change, and reject conflicting dimensions. Successful project opens are undoable. Rejected imports preserve the current plan and certified route.

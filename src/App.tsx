@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { presets } from "./core/presets";
 import { exportJson, routeSvg } from "./core/serialize";
 import { LIMITS, type Project, type Route } from "./core/schema";
 import { messages, localeNames, type Locale } from "./locales";
 import { createEmptyProject, createObstacle, editRect } from "./core/editor";
 import { shortAngle } from "./core/geometry";
+import { checkEndpoint } from "./core/endpoints";
 import { formatClearance } from "./core/units";
 import {
   Field,
@@ -97,6 +98,12 @@ function AppBody() {
   const [selection, setSelection] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [narrowViewport, setNarrowViewport] = useState(false);
+  const [currentSection, setCurrentSection] = useState<
+    "layout" | "furniture" | "route-panel"
+  >("layout");
+  const programmaticSectionScroll = useRef(false);
+  const navigationTarget = useRef<typeof currentSection | null>(null);
+  const navigationTimer = useRef<number | null>(null);
   const measureOpener = useRef<HTMLButtonElement>(null);
   const sidebar = useRef<HTMLElement>(null);
   const canvas = useRef<SVGSVGElement>(null);
@@ -179,6 +186,94 @@ function AppBody() {
       if (mainPanel) mainPanel.inert = false;
     };
   }, [mobileOpen, narrowViewport]);
+  const updateCurrentSection = useCallback(
+    (completedTarget?: typeof currentSection | null) => {
+      if (programmaticSectionScroll.current) return;
+      const container = sidebar.current;
+      if (!container) return;
+      const drawerOpen = narrowViewport && mobileOpen;
+      const scroller = drawerOpen ? container : document.scrollingElement;
+      const anchor = drawerOpen
+        ? container.getBoundingClientRect().top + 112
+        : 112;
+      const sections = (["layout", "furniture", "route-panel"] as const)
+        .map((id) => document.getElementById(id))
+        .filter(
+          (element): element is HTMLElement => element instanceof HTMLElement,
+        );
+      const section = sections.reduce<HTMLElement | undefined>(
+        (current, element) =>
+          !current || element.getBoundingClientRect().top <= anchor
+            ? element
+            : current,
+        undefined,
+      );
+      if (
+        section?.id !== completedTarget &&
+        scroller &&
+        scroller.scrollHeight > scroller.clientHeight + 2 &&
+        scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2
+      ) {
+        setCurrentSection("route-panel");
+        return;
+      }
+      if (section) setCurrentSection(section.id as typeof currentSection);
+    },
+    [mobileOpen, narrowViewport],
+  );
+  const finishProgrammaticScroll = useCallback(() => {
+    if (!programmaticSectionScroll.current) return;
+    const completedTarget = navigationTarget.current;
+    navigationTarget.current = null;
+    programmaticSectionScroll.current = false;
+    if (navigationTimer.current !== null)
+      window.clearTimeout(navigationTimer.current);
+    navigationTimer.current = null;
+    updateCurrentSection(completedTarget);
+  }, [updateCurrentSection]);
+  useEffect(() => {
+    const onScroll = () => updateCurrentSection();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scrollend", finishProgrammaticScroll);
+    document.addEventListener("scrollend", finishProgrammaticScroll);
+    sidebar.current?.addEventListener("scroll", onScroll, {
+      passive: true,
+    });
+    sidebar.current?.addEventListener("scrollend", finishProgrammaticScroll);
+    updateCurrentSection();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scrollend", finishProgrammaticScroll);
+      document.removeEventListener("scrollend", finishProgrammaticScroll);
+      sidebar.current?.removeEventListener("scroll", onScroll);
+      sidebar.current?.removeEventListener(
+        "scrollend",
+        finishProgrammaticScroll,
+      );
+      if (navigationTimer.current !== null)
+        window.clearTimeout(navigationTimer.current);
+      navigationTimer.current = null;
+      programmaticSectionScroll.current = false;
+      navigationTarget.current = null;
+    };
+  }, [updateCurrentSection, finishProgrammaticScroll]);
+  const navigateSection = (id: typeof currentSection) => {
+    setCurrentSection(id);
+    const section = document.getElementById(id);
+    if (!section) return;
+    programmaticSectionScroll.current = true;
+    navigationTarget.current = id;
+    if (navigationTimer.current !== null)
+      window.clearTimeout(navigationTimer.current);
+    section.focus({ preventScroll: true });
+    section.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+      block: "start",
+    });
+    navigationTimer.current = window.setTimeout(finishProgrammaticScroll, 1200);
+  };
   const shown = (cm: number) => (unit === "cm" ? cm : cm / 2.54);
   const label = (cm: number) => `${shown(cm).toFixed(1)} ${unit}`;
   const presetLabel = (name: string) =>
@@ -538,6 +633,37 @@ function AppBody() {
         axis = key.endsWith("X") ? "x" : "y";
       return { ...p, [which]: { ...p[which], [axis]: n } };
     });
+  const endpoints = useMemo(
+    () => ({
+      start: checkEndpoint(project.start, project),
+      goal: checkEndpoint(project.goal, project),
+    }),
+    [project],
+  );
+  const showEndpointWarnings = !pendingDraft && !invalidDraft;
+  const endpointWarnings = showEndpointWarnings
+    ? (
+        [
+          [t.start, endpoints.start],
+          [t.destination, endpoints.goal],
+        ] as const
+      )
+        .filter(([, result]) => result.issue !== null)
+        .map(([name, result]) =>
+          t.endpointWarning
+            .replace("{endpoint}", name)
+            .replace(
+              "{issue}",
+              result.issue === "collision"
+                ? t.endpointCollision
+                : t.endpointMargin.replace(
+                    "{clearance}",
+                    formatClearance(result.clearance, unit),
+                  ),
+            )
+            .replace("{margin}", label(project.margin)),
+        )
+    : [];
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -646,37 +772,31 @@ function AppBody() {
             </button>
           </div>
           <div className="step-tabs">
-            <button
-              className="active"
-              onClick={() => {
-                setMobileOpen(false);
-                requestAnimationFrame(() => measureOpener.current?.focus());
-              }}
-            >
-              {t.layout}
-            </button>
-            <button
-              onClick={() =>
-                document
-                  .getElementById("furniture")
-                  ?.scrollIntoView({ behavior: "smooth" })
-              }
-            >
-              {t.furniture}
-            </button>
-            <button
-              onClick={() =>
-                document
-                  .getElementById("route-panel")
-                  ?.scrollIntoView({ behavior: "smooth" })
-              }
-            >
-              {t.route}
-            </button>
+            {(
+              [
+                ["layout", t.layout],
+                ["furniture", t.furniture],
+                ["route-panel", t.route],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                className={currentSection === id ? "active" : ""}
+                aria-current={currentSection === id ? "location" : undefined}
+                onClick={() => navigateSection(id)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-          <section className="form-section">
+          <section
+            className="form-section"
+            id="layout"
+            tabIndex={-1}
+            aria-labelledby="layout-heading"
+          >
             <div className="section-title">
-              <h2>{t.floor}</h2>
+              <h2 id="layout-heading">{t.floor}</h2>
               <span className="unit-pills">
                 <button
                   className={unit === "cm" ? "picked" : ""}
@@ -803,9 +923,14 @@ function AppBody() {
               </button>
             </div>
           </section>
-          <section className="form-section" id="furniture">
+          <section
+            className="form-section"
+            id="furniture"
+            tabIndex={-1}
+            aria-labelledby="furniture-heading"
+          >
             <div className="section-title">
-              <h2>{t.furniture}</h2>
+              <h2 id="furniture-heading">{t.furniture}</h2>
               <span className="section-index">01—03</span>
             </div>
             <div className="input-grid">
@@ -940,6 +1065,7 @@ function AppBody() {
                 />
               </fieldset>
             </div>
+            <p className="coordinate-guidance">{t.coordinateGuidance}</p>
           </section>
           <section className="form-section">
             <div className="section-title">
@@ -1012,9 +1138,14 @@ function AppBody() {
               />
             )}
           </section>
-          <section className="form-section" id="route-panel">
+          <section
+            className="form-section"
+            id="route-panel"
+            tabIndex={-1}
+            aria-labelledby="route-heading"
+          >
             <div className="section-title">
-              <h2>{t.route}</h2>
+              <h2 id="route-heading">{t.route}</h2>
               <label className="toggle">
                 <input
                   type="checkbox"
@@ -1154,6 +1285,11 @@ function AppBody() {
                   ? t[status]
                   : t.noRouteYet}
           </p>
+          <div className="endpoint-warnings" role="status">
+            {endpointWarnings.map((warning) => (
+              <p key={warning}>{warning}</p>
+            ))}
+          </div>
           <div className="canvas-wrap">
             <Floorplan
               svgRef={canvas}
@@ -1167,6 +1303,8 @@ function AppBody() {
               mode={mode}
               setMode={setMode}
               label={label}
+              endpointChecks={endpoints}
+              showEndpointWarnings={showEndpointWarnings}
               change={change}
               beginDrag={historyState.beginGroup}
               endDrag={historyState.endGroup}
@@ -1251,6 +1389,10 @@ function AppBody() {
             <span>
               <i className="legend-furniture" />
               {t.furnitureFootprint}
+            </span>
+            <span>
+              <i className="legend-destination" />
+              {t.destinationFootprint}
             </span>
             <span>
               <i className="legend-route" />

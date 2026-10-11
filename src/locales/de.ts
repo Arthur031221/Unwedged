@@ -36,8 +36,16 @@ export default {
   export: "Routenplan exportieren",
   noRoute:
     "In dieser begrenzten Suche wurde keine Route gefunden. Versuchen Sie die Feinsuche oder ändern Sie den Grundriss.",
-  startHit: "Das Möbelstück stößt in der Startpose an.",
-  goalHit: "Das Möbelstück stößt am Ziel an.",
+  startHit:
+    "Das Möbelstück stößt in der Startpose an oder unterschreitet den erforderlichen Sicherheitsabstand.",
+  goalHit:
+    "Das Möbelstück stößt am Ziel an oder unterschreitet den erforderlichen Sicherheitsabstand.",
+  endpointWarning:
+    "{endpoint}: {issue}. Erforderlicher Sicherheitsabstand {margin}.",
+  endpointCollision:
+    "das Möbel berührt oder überschreitet eine Wand, ein Hindernis oder den Grundrissrand",
+  endpointMargin:
+    "Abstand {clearance} liegt am oder unter dem Sicherheitsabstand",
   timeout: "Suchlimit erreicht. Das beweist nicht, dass keine Route existiert.",
   cancelled: "Suche abgebrochen.",
   verified: "Route konservativ zertifiziert",
@@ -73,6 +81,10 @@ export default {
   emptyObstacles: "Keine festen Hindernisse in diesem Grundriss.",
   fineSearch: "Feinsuche",
   selectedObstacle: "Hindernis ausgewählt · zum Verschieben ziehen",
+  coordinateGuidance:
+    "X/Y geben die Mittelpunkte an. Der Ursprung liegt unten links. X wächst nach rechts und Y nach oben. Positive Winkel drehen gegen den Uhrzeigersinn.",
+  obstacleCoordinateGuidance:
+    "X/Y geben den Mittelpunkt des Hindernisses vom Ursprung unten links an. X wächst nach rechts und Y nach oben.",
   doorway: "Türöffnung",
   openingWidth: "Öffnungsbreite",
   openingHeight: "Öffnungshöhe",
@@ -83,6 +95,7 @@ export default {
   presetBlocked: "Blockierter Flur",
   fixedStructure: "Feste Struktur",
   furnitureFootprint: "Möbelfläche",
+  destinationFootprint: "Möbelfläche am Ziel",
   certifiedRoute: "Zertifizierte Route",
   measurementsIn: "Maße in",
   storedCm: "gespeichert in Zentimetern",
